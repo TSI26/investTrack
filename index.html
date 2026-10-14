@@ -8013,32 +8013,37 @@ function getSupabase() {
 
 // ── Auth Tab UI ──────────────────────────────────────────────────────────────
 function showLoginTab(tab) {
-  var panelAuth = document.getElementById('loginPanelAuth');
-  var panelLocal = document.getElementById('loginPanelLocal');
-  var btnAuth = document.getElementById('tabAuthBtn');
-  var btnLocal = document.getElementById('tabLocalBtn');
-  if (tab === 'auth') {
-    if(panelAuth) panelAuth.style.display = 'block';
-    if(panelLocal) panelLocal.style.display = 'none';
-    if(btnAuth) { btnAuth.style.background = 'var(--gold)'; btnAuth.style.color = '#fff'; }
-    if(btnLocal) { btnLocal.style.background = 'transparent'; btnLocal.style.color = 'var(--t2)'; }
-  } else {
-    if(panelAuth) panelAuth.style.display = 'none';
-    if(panelLocal) panelLocal.style.display = 'block';
-    if(btnAuth) { btnAuth.style.background = 'transparent'; btnAuth.style.color = 'var(--t2)'; }
-    if(btnLocal) { btnLocal.style.background = 'var(--gold)'; btnLocal.style.color = '#fff'; }
-    initLoginScreen();
-  }
-  document.getElementById('loginErr').textContent = '';
+  try {
+    var panelAuth = document.getElementById('loginPanelAuth');
+    var panelLocal = document.getElementById('loginPanelLocal');
+    var btnAuth = document.getElementById('tabAuthBtn');
+    var btnLocal = document.getElementById('tabLocalBtn');
+    if (tab === 'auth') {
+      if(panelAuth) { panelAuth.style.cssText = 'display:block!important'; }
+      if(panelLocal) { panelLocal.style.cssText = 'display:none!important'; }
+      if(btnAuth) { btnAuth.style.background = 'var(--gold)'; btnAuth.style.color = '#fff'; }
+      if(btnLocal) { btnLocal.style.background = 'transparent'; btnLocal.style.color = 'var(--t2)'; }
+    } else {
+      if(panelAuth) { panelAuth.style.cssText = 'display:none!important'; }
+      if(panelLocal) { panelLocal.style.cssText = 'display:block!important'; }
+      if(btnAuth) { btnAuth.style.background = 'transparent'; btnAuth.style.color = 'var(--t2)'; }
+      if(btnLocal) { btnLocal.style.background = 'var(--gold)'; btnLocal.style.color = '#fff'; }
+      try { initLoginScreen(); } catch(e) {}
+    }
+    var err = document.getElementById('loginErr');
+    if(err) err.textContent = '';
+  } catch(e) { console.error('showLoginTab error:', e); }
 }
 
 function showAuthPanel(panel) {
-  var panels = ['panelSignIn','panelSignUp','panelReset'];
-  panels.forEach(function(id) {
+  var map = { 'signin': 'panelSignIn', 'signup': 'panelSignUp', 'reset': 'panelReset' };
+  var targetId = map[panel];
+  ['panelSignIn','panelSignUp','panelReset'].forEach(function(id) {
     var el = document.getElementById(id);
-    if(el) el.style.display = (id === 'panel' + panel.charAt(0).toUpperCase() + panel.slice(1)) ? 'block' : 'none';
+    if(el) el.style.display = (id === targetId) ? 'block' : 'none';
   });
-  document.getElementById('loginErr').textContent = '';
+  var err = document.getElementById('loginErr');
+  if(err) err.textContent = '';
 }
 
 // ── Sign In ──────────────────────────────────────────────────────────────────
