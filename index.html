@@ -252,6 +252,34 @@ td.td-center{text-align:center!important}
 .ai-donut-modal{background:var(--bg3);border:1px solid var(--b2);border-radius:18px;padding:28px;width:520px;max-width:95vw;display:flex;flex-direction:column;gap:20px;box-shadow:0 40px 80px rgba(0,0,0,.7)}
 @media(max-width:1100px){.kg{grid-template-columns:repeat(3,1fr)}.charts-row{grid-template-columns:1fr}}
 @media(max-width:760px){.app{grid-template-columns:1fr}.sidebar{display:none}.main{padding:14px}.kg{grid-template-columns:repeat(2,1fr)}}
+
+/* ── BOTTOM NAV MOBILE ──────────────────────────────────────────────────── */
+.mob-bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:var(--bg2);border-top:1px solid var(--b1);padding:0 4px;padding-bottom:env(safe-area-inset-bottom,0px);height:calc(58px + env(safe-area-inset-bottom,0px))}
+.mob-nav-inner{display:flex;align-items:stretch;height:58px;gap:0}
+.mob-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;color:var(--t3);font-size:10px;font-family:"Inter",sans-serif;font-weight:500;border:none;background:none;padding:6px 4px;transition:color .15s;position:relative;border-top:2px solid transparent}
+.mob-nav-item.active{color:var(--gold);border-top-color:var(--gold)}
+.mob-nav-item svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.mob-nav-item .mob-nav-icon{font-size:18px;line-height:1}
+/* Bouton switch bureau — visible seulement sur mobile */
+.btn-desktop-switch{display:none;padding:6px 10px;background:var(--bg3);border:1px solid var(--b1);border-radius:var(--rs);color:var(--t2);font-size:11px;font-weight:600;cursor:pointer;font-family:"Inter",sans-serif;transition:all .2s;align-items:center;gap:5px;white-space:nowrap}
+.btn-desktop-switch:hover{border-color:var(--gold);color:var(--gold)}
+/* Quand on force le mode desktop sur mobile */
+body.force-desktop .mob-bottom-nav{display:none!important}
+body.force-desktop .sidebar{display:flex!important}
+body.force-desktop .app{grid-template-columns:220px 1fr!important}
+body.force-desktop .main{padding-bottom:28px!important}
+@media(max-width:760px){
+  body:not(.force-desktop) .mob-bottom-nav{display:flex}
+  body:not(.force-desktop) .btn-desktop-switch{display:flex}
+  body:not(.force-desktop) .main{padding-bottom:calc(58px + env(safe-area-inset-bottom,0px) + 14px)!important}
+  /* Topbar compacte */
+  body:not(.force-desktop) .topbar{padding:0 12px}
+  body:not(.force-desktop) #btnRefreshPx{display:none!important}
+  body:not(.force-desktop) .btn-add span{display:none}
+  body:not(.force-desktop) .btn-add{padding:8px 10px}
+  body:not(.force-desktop) #refreshLabel{display:none}
+  /* KPI 1 col sur très petit écran */
+}
 tbody tr{animation:fi .18s ease}@keyframes fi{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
 /* ─── AUTH SCREEN (split-screen) ──────────────────────────────────────────── */
 /* Variables mappées sur le design system */
@@ -509,6 +537,7 @@ tbody tr{animation:fi .18s ease}@keyframes fi{from{opacity:0;transform:translate
     <span style="font-size:16px;font-weight:700;color:var(--t1);letter-spacing:-.02em;font-family:'Inter',sans-serif">Invest<span style="color:var(--gold)">Track</span></span>
   </div>
   <div class="tbar-r">
+    <button id="btnDesktopSwitch" class="btn-desktop-switch" onclick="toggleForceDesktop()" title="Basculer vue bureau">🖥 Bureau</button>
     <button id="btnLockGlobal" onclick="toggleHideAmounts()" title="Cacher/Afficher les montants" style="padding:8px 12px;background:var(--bg3);border:1px solid var(--b1);border-radius:var(--rs);color:var(--t2);font-size:16px;cursor:pointer;transition:all .2s;display:flex;align-items:center" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--b1)';this.style.color='var(--t2)'">🔓</button>
 
     <div style="display:flex;align-items:center;gap:10px">
@@ -1884,6 +1913,39 @@ function toggleSidebar() {
 }
 
 function goHome(){showView('dashboard',document.getElementById('nav-dashboard'));}
+
+/* ── Navigation mobile ──────────────────────────────────────────────────── */
+function _syncMobNav(id) {
+  document.querySelectorAll('.mob-nav-item').forEach(function(b){b.classList.remove('active')});
+  var mob = document.getElementById('mob-nav-'+id);
+  if(mob) mob.classList.add('active');
+}
+function mobNav(id, el) {
+  _syncMobNav(id);
+  // Sync la sidebar desktop aussi
+  var sideEl = document.getElementById('nav-'+id);
+  _origShowView(id, sideEl || null);
+}
+// Quand showView est appelé depuis la sidebar, sync la bottom nav
+var _origShowView = showView;
+showView = function(id, el) {
+  _origShowView(id, el);
+  _syncMobNav(id);
+};
+
+/* ── Switch mode bureau / mobile ────────────────────────────────────────── */
+function toggleForceDesktop() {
+  var isForced = document.body.classList.toggle('force-desktop');
+  var btn = document.getElementById('btnDesktopSwitch');
+  if(btn) btn.innerHTML = isForced ? '📱 Mobile' : '🖥 Bureau';
+  localStorage.setItem('y26_force_desktop', isForced ? '1' : '0');
+  if(isForced) {
+    // Remettre la sidebar dans l'état sauvegardé
+    var collapsed = localStorage.getItem('y26_sidebar_collapsed') === '1';
+    var app = document.querySelector('.app');
+    if(app) app.classList.toggle('collapsed', collapsed);
+  }
+}
 
 // ─── CALC ─────────────────────────────────────────────────────────────────────
 function calcPos() {
@@ -7963,6 +8025,32 @@ function resetCashCcy(ccy){ if(ccy==='usd')CASH_USD_MANUAL=null; else CASH_EUR_M
   </div>
 </div>
 
+<!-- ─── BOTTOM NAV MOBILE ─────────────────────────────────────────────────── -->
+<nav class="mob-bottom-nav" id="mobBottomNav">
+  <div class="mob-nav-inner">
+    <button class="mob-nav-item active" id="mob-nav-dashboard" onclick="mobNav('dashboard',this)">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>
+      <span>Dashboard</span>
+    </button>
+    <button class="mob-nav-item" id="mob-nav-positions" onclick="mobNav('positions',this)">
+      <svg viewBox="0 0 24 24"><path d="M20 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2Z"/><path d="M16 7V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v2"/><path d="M18 12h.01"/></svg>
+      <span>Holdings</span>
+    </button>
+    <button class="mob-nav-item" id="mob-nav-transactions" onclick="mobNav('transactions',this)">
+      <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 2.6-6.3"/><path d="M3 4v5h5"/><path d="M12 7v5l3 3"/></svg>
+      <span>Transactions</span>
+    </button>
+    <button class="mob-nav-item" id="mob-nav-cash" onclick="mobNav('cash',this)">
+      <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+      <span>Cash</span>
+    </button>
+    <button class="mob-nav-item" id="mob-nav-allocation" onclick="mobNav('allocation',this)">
+      <svg viewBox="0 0 24 24"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+      <span>Allocation</span>
+    </button>
+  </div>
+</nav>
+
 <!-- ─── AUTH ROOT (split-screen, injecté dynamiquement) ───────────────────── -->
 <div id="auth-root"></div>
 <!-- ─── SÉLECTION DE PORTEFEUILLE ────────────────────────────────────────── -->
@@ -9287,6 +9375,12 @@ function renderAllocInvChart(pos) {
 // ═══════════════════════════════════════════════════════════════════════════
 (function() {
   function _boot() {
+    // Restore force-desktop mode
+    if(localStorage.getItem('y26_force_desktop') === '1') {
+      document.body.classList.add('force-desktop');
+      var btn = document.getElementById('btnDesktopSwitch');
+      if(btn) btn.innerHTML = '📱 Mobile';
+    }
     // Restore sidebar state
     if(localStorage.getItem('y26_sidebar_collapsed') === '1') {
       var app = document.querySelector('.app');
