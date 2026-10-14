@@ -671,33 +671,39 @@ tbody tr{animation:fi .18s ease}@keyframes fi{from{opacity:0;transform:translate
 }
 /* ── Sélection de portefeuille ── */
 #port-select{position:fixed;inset:0;z-index:99999;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px}
-.psel-card{width:100%;max-width:440px;background:var(--bg2);border:1px solid var(--b1);border-radius:20px;padding:32px;display:flex;flex-direction:column;gap:20px}
+#port-select{background:radial-gradient(ellipse at 30% 0%,rgba(59,130,246,.12),transparent 55%),radial-gradient(ellipse at 80% 100%,rgba(34,197,94,.07),transparent 50%),var(--bg)}
+.psel-card{width:100%;max-width:460px;background:var(--bg2);border:1px solid var(--b1);border-radius:24px;padding:36px 32px 28px;display:flex;flex-direction:column;gap:22px;box-shadow:0 32px 80px rgba(0,0,0,.5)}
 .psel-logo{display:flex;align-items:center;gap:12px;justify-content:center}
-.psel-logo-mark{width:40px;height:40px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#fff}
-.psel-title{font-size:22px;font-weight:800;text-align:center;margin:0}
-.psel-sub{font-size:14px;color:var(--t3);text-align:center;margin:-8px 0 0}
-.psel-list{display:flex;flex-direction:column;gap:8px;max-height:320px;overflow-y:auto}
-.psel-item{display:flex;align-items:center;gap:10px;padding:14px 16px;background:var(--bg3);border:1.5px solid var(--b1);border-radius:12px;cursor:pointer;transition:border-color .15s,background .15s}
-.psel-item:hover{border-color:var(--gold);background:var(--gdim)}
-.psel-item-icon{width:36px;height:36px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#fff;flex-shrink:0}
-.psel-item-name{flex:1;font-size:15px;font-weight:600;color:var(--t1)}
-.psel-item-exp{width:30px;height:30px;border:none;background:transparent;color:var(--t3);cursor:pointer;border-radius:7px;font-size:14px;display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s;flex-shrink:0}
+.psel-logo-mark{width:44px;height:44px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:20px;color:#fff;box-shadow:0 4px 16px rgba(59,130,246,.35)}
+.psel-title{font-size:24px;font-weight:800;text-align:center;margin:0;letter-spacing:-.3px}
+.psel-sub{font-size:14px;color:var(--t3);text-align:center;margin:-10px 0 0}
+.psel-list{display:flex;flex-direction:column;gap:8px;max-height:340px;overflow-y:auto}
+.psel-item{display:flex;align-items:center;gap:12px;padding:13px 14px;background:var(--bg3);border:1.5px solid var(--b1);border-radius:14px;cursor:pointer;transition:border-color .15s,background .15s,transform .1s}
+.psel-item:hover{border-color:var(--gold);background:var(--gdim);transform:translateY(-1px)}
+.psel-item:active{transform:translateY(0)}
+.psel-item-icon{width:42px;height:42px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);border-radius:11px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;color:#fff;flex-shrink:0;overflow:hidden}
+.psel-item-icon img{width:100%;height:100%;object-fit:cover;border-radius:inherit}
+.psel-item-info{flex:1;min-width:0}
+.psel-item-name{font-size:15px;font-weight:600;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.psel-item-meta{font-size:12px;color:var(--t3);margin-top:1px}
+.psel-item-actions{display:flex;gap:4px;flex-shrink:0}
+.psel-item-exp{width:30px;height:30px;border:none;background:transparent;color:var(--t3);cursor:pointer;border-radius:8px;font-size:14px;display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s}
 .psel-item-exp:hover{background:var(--gdim);color:var(--green)}
-.psel-item-del{width:30px;height:30px;border:none;background:transparent;color:var(--t3);cursor:pointer;border-radius:7px;font-size:16px;display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s;flex-shrink:0}
+.psel-item-del{width:30px;height:30px;border:none;background:transparent;color:var(--t3);cursor:pointer;border-radius:8px;font-size:16px;display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s}
 .psel-item-del:hover{background:var(--rdim);color:var(--red)}
 .psel-transfer-row{display:flex;justify-content:center}
-.psel-transfer-btn{background:none;border:1px dashed var(--b2);color:var(--t3);font-size:13px;font-family:"Inter",sans-serif;padding:9px 18px;border-radius:9px;cursor:pointer;transition:all .15s;width:100%}
+.psel-transfer-btn{background:none;border:1px dashed var(--b2);color:var(--t3);font-size:13px;font-family:"Inter",sans-serif;padding:9px 18px;border-radius:10px;cursor:pointer;transition:all .15s;width:100%}
 .psel-transfer-btn:hover{border-color:var(--gold);color:var(--gold2);background:var(--gdim)}
-.psel-divider{border:none;border-top:1px solid var(--b1);margin:4px 0}
+.psel-divider{border:none;border-top:1px solid var(--b1);margin:0}
 .psel-new{display:flex;gap:10px;align-items:center}
-.psel-new input{flex:1;padding:12px 14px;background:var(--bg3);border:1.5px solid var(--b1);border-radius:10px;color:var(--t1);font-size:15px;font-family:"Inter",sans-serif;outline:none;transition:border-color .15s}
+.psel-new input{flex:1;padding:12px 14px;background:var(--bg3);border:1.5px solid var(--b1);border-radius:11px;color:var(--t1);font-size:15px;font-family:"Inter",sans-serif;outline:none;transition:border-color .15s}
 .psel-new input:focus{border-color:var(--gold)}
 .psel-new input::placeholder{color:var(--t3)}
-.psel-new-btn{padding:12px 18px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:opacity .15s;font-family:"Inter",sans-serif}
-.psel-new-btn:hover{opacity:.88}
-.psel-signout{background:none;border:none;color:var(--t3);font-size:13px;cursor:pointer;font-family:"Inter",sans-serif;align-self:center;padding:4px 8px;border-radius:6px;transition:color .15s}
+.psel-new-btn{padding:12px 18px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:#fff;border:none;border-radius:11px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:opacity .15s,transform .1s;font-family:"Inter",sans-serif;box-shadow:0 2px 10px rgba(59,130,246,.3)}
+.psel-new-btn:hover{opacity:.9;transform:translateY(-1px)}
+.psel-signout{background:none;border:none;color:var(--t3);font-size:13px;cursor:pointer;font-family:"Inter",sans-serif;align-self:center;padding:5px 10px;border-radius:7px;transition:color .15s}
 .psel-signout:hover{color:var(--red)}
-.psel-empty{text-align:center;color:var(--t3);font-size:14px;padding:16px 0}
+.psel-empty{text-align:center;color:var(--t3);font-size:14px;padding:20px 0}
 
 #logoBtn:hover #logoChevron{opacity:1!important}
 #logoBtn #logoChevron{opacity:0}
@@ -8852,23 +8858,51 @@ function showPortfolioSelect() {
 
   function _render() {
     var curList = getPortfolios();
+    // Palette de dégradés par index pour la lettre de fallback
+    var _pselGradients = [
+      'linear-gradient(135deg,#1d4ed8,#3b82f6)',
+      'linear-gradient(135deg,#065f46,#10b981)',
+      'linear-gradient(135deg,#7c2d12,#f97316)',
+      'linear-gradient(135deg,#581c87,#a855f7)',
+      'linear-gradient(135deg,#881337,#f43f5e)',
+      'linear-gradient(135deg,#0c4a6e,#06b6d4)',
+      'linear-gradient(135deg,#713f12,#eab308)',
+    ];
     var itemsHtml = curList.length === 0
       ? '<div class="psel-empty">Aucun portefeuille. Crée-en un ci-dessous.</div>'
-      : curList.map(function(name) {
+      : curList.map(function(name, idx) {
           var initial = name.trim().charAt(0).toUpperCase();
           var safeName = _esc(name).replace(/'/g,"\\'");
+          var avatarUrl = localStorage.getItem(portfolioKey(name, 'avatar'));
+          var grad = _pselGradients[idx % _pselGradients.length];
+          var iconHtml = avatarUrl
+            ? '<div class="psel-item-icon"><img src="'+avatarUrl+'" alt=""></div>'
+            : '<div class="psel-item-icon" style="background:'+grad+'">'+_esc(initial)+'</div>';
+          // Nombre de positions
+          var txRaw = localStorage.getItem(portfolioKey(name, 'tx'));
+          var txList = []; try { txList = JSON.parse(txRaw||'[]'); } catch(e){}
+          var tickers = {};
+          txList.forEach(function(t){ if(t&&t.ticker) tickers[t.ticker]=1; });
+          var posCount = Object.keys(tickers).length;
+          var meta = posCount > 0 ? posCount + ' position'+(posCount>1?'s':'') : 'Vide';
           return '<div class="psel-item" onclick="window._pselOpen(\''+safeName+'\')">'
-               + '<div class="psel-item-icon">'+_esc(initial)+'</div>'
-               + '<div class="psel-item-name">'+_esc(name)+'</div>'
-               + '<button class="psel-item-exp" title="Exporter" onclick="event.stopPropagation();window._pselExport(\''+safeName+'\')">⬇</button>'
-               + '<button class="psel-item-del" title="Supprimer" onclick="event.stopPropagation();window._pselDel(\''+safeName+'\')">&times;</button>'
+               + iconHtml
+               + '<div class="psel-item-info"><div class="psel-item-name">'+_esc(name)+'</div><div class="psel-item-meta">'+meta+'</div></div>'
+               + '<div class="psel-item-actions">'
+               + '<button class="psel-item-exp" title="Exporter" onclick="event.stopPropagation();window._pselExport(\''+safeName+'\')" aria-label="Exporter"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>'
+               + '<button class="psel-item-del" title="Supprimer" onclick="event.stopPropagation();window._pselDel(\''+safeName+'\')" aria-label="Supprimer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>'
+               + '</div>'
                + '</div>';
         }).join('');
 
+    var userEmail = (_sbUser && _sbUser.email) ? _sbUser.email : '';
+    var userInitial = userEmail ? userEmail.charAt(0).toUpperCase() : 'Y';
     root.innerHTML = '<div class="psel-card">'
-      + '<div class="psel-logo"><div class="psel-logo-mark">Y</div></div>'
+      + '<div class="psel-logo"><div class="psel-logo-mark">'+_esc(userInitial)+'</div></div>'
+      + '<div>'
       + '<h2 class="psel-title">Mes portefeuilles</h2>'
-      + '<p class="psel-sub">Sélectionne ou crée un portefeuille</p>'
+      + (userEmail ? '<p class="psel-sub">'+_esc(userEmail)+'</p>' : '<p class="psel-sub">Sélectionne ou crée un portefeuille</p>')
+      + '</div>'
       + '<div class="psel-list" id="psel-list">'+itemsHtml+'</div>'
       + '<hr class="psel-divider">'
       + '<div class="psel-new">'
