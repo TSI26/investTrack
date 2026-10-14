@@ -312,6 +312,30 @@ tbody tr{animation:fi .18s ease}@keyframes fi{from{opacity:0;transform:translate
   .auth-card .sub{text-align:center}
   .auth-msg{text-align:center}
 }
+/* ── Sélection de portefeuille ── */
+#port-select{position:fixed;inset:0;z-index:99999;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px}
+.psel-card{width:100%;max-width:440px;background:var(--bg2);border:1px solid var(--b1);border-radius:20px;padding:32px;display:flex;flex-direction:column;gap:20px}
+.psel-logo{display:flex;align-items:center;gap:12px;justify-content:center}
+.psel-logo-mark{width:40px;height:40px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#fff}
+.psel-title{font-size:22px;font-weight:800;text-align:center;margin:0}
+.psel-sub{font-size:14px;color:var(--t3);text-align:center;margin:-8px 0 0}
+.psel-list{display:flex;flex-direction:column;gap:8px;max-height:320px;overflow-y:auto}
+.psel-item{display:flex;align-items:center;gap:10px;padding:14px 16px;background:var(--bg3);border:1.5px solid var(--b1);border-radius:12px;cursor:pointer;transition:border-color .15s,background .15s}
+.psel-item:hover{border-color:var(--gold);background:var(--gdim)}
+.psel-item-icon{width:36px;height:36px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#fff;flex-shrink:0}
+.psel-item-name{flex:1;font-size:15px;font-weight:600;color:var(--t1)}
+.psel-item-del{width:30px;height:30px;border:none;background:transparent;color:var(--t3);cursor:pointer;border-radius:7px;font-size:16px;display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s;flex-shrink:0}
+.psel-item-del:hover{background:var(--rdim);color:var(--red)}
+.psel-divider{border:none;border-top:1px solid var(--b1);margin:4px 0}
+.psel-new{display:flex;gap:10px;align-items:center}
+.psel-new input{flex:1;padding:12px 14px;background:var(--bg3);border:1.5px solid var(--b1);border-radius:10px;color:var(--t1);font-size:15px;font-family:"Inter",sans-serif;outline:none;transition:border-color .15s}
+.psel-new input:focus{border-color:var(--gold)}
+.psel-new input::placeholder{color:var(--t3)}
+.psel-new-btn{padding:12px 18px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:opacity .15s;font-family:"Inter",sans-serif}
+.psel-new-btn:hover{opacity:.88}
+.psel-signout{background:none;border:none;color:var(--t3);font-size:13px;cursor:pointer;font-family:"Inter",sans-serif;align-self:center;padding:4px 8px;border-radius:6px;transition:color .15s}
+.psel-signout:hover{color:var(--red)}
+.psel-empty{text-align:center;color:var(--t3);font-size:14px;padding:16px 0}
 
 #logoBtn:hover #logoChevron{opacity:1!important}
 #logoBtn #logoChevron{opacity:0}
@@ -1434,7 +1458,7 @@ function saveCurrentPortfolio() {
   if(_sbUser) {
     clearTimeout(window._sbSaveTimer);
     window._sbSaveTimer = setTimeout(function() {
-      sbSaveData(CURRENT_PORTFOLIO);
+      sbSaveAllPortfolios();
     }, 1500);
   }
 }
@@ -1520,23 +1544,22 @@ function switchPortfolio() {
   document.getElementById('userMenuDropdown').style.display = 'none';
   saveCurrentPortfolio();
   TX = []; PX = {}; CURRENT_PORTFOLIO = null;
-  _authMode = 'login';
-  showAuth();
+  showPortfolioSelect();
 }
 function deletePortfolio() {
   if(!CURRENT_PORTFOLIO) return;
   if(!confirm('Supprimer "'+CURRENT_PORTFOLIO+'" et toutes ses données ?')) return;
   document.getElementById('userMenuDropdown').style.display = 'none';
+  var name = CURRENT_PORTFOLIO;
   // Remove from list and clear data
-  var list = getPortfolios().filter(function(p){ return p !== CURRENT_PORTFOLIO; });
+  var list = getPortfolios().filter(function(p){ return p !== name; });
   savePortfolios(list);
-  localStorage.removeItem(portfolioKey(CURRENT_PORTFOLIO,'tx'));
-  localStorage.removeItem(portfolioKey(CURRENT_PORTFOLIO,'px'));
-  localStorage.removeItem(portfolioKey(CURRENT_PORTFOLIO,'prefs'));
+  var suffixes = ['tx','px','cash','prefs','px_manual','avg_manual','tv_manual','upl_manual','cash_manual','cash_usd_manual','cash_eur_manual','donut_colors','avatar'];
+  suffixes.forEach(function(s){ localStorage.removeItem(portfolioKey(name, s)); });
   localStorage.removeItem('y26_last_portfolio');
   TX = []; PX = {}; CURRENT_PORTFOLIO = null;
-  _authMode = 'login';
-  showAuth();
+  if(_sbUser) sbSaveAllPortfolios();
+  showPortfolioSelect();
 }
 // Close menu on outside click
 document.addEventListener('click', function(e) {
@@ -7948,6 +7971,8 @@ function resetCashCcy(ccy){ if(ccy==='usd')CASH_USD_MANUAL=null; else CASH_EUR_M
 
 <!-- ─── AUTH ROOT (split-screen, injecté dynamiquement) ───────────────────── -->
 <div id="auth-root"></div>
+<!-- ─── SÉLECTION DE PORTEFEUILLE ────────────────────────────────────────── -->
+<div id="port-select" style="display:none"></div>
 
 
 <script>
@@ -8169,6 +8194,9 @@ async function authSignOut() {
   TX = []; PX = {}; CASH_MOVEMENTS = [];
   var d = document.getElementById('userMenuDropdown');
   if(d) d.style.display = 'none';
+  // Hide portfolio select screen if visible
+  var ps = document.getElementById('port-select');
+  if(ps) { ps.style.display = 'none'; ps.innerHTML = ''; }
   _authMode = 'login';
   _authEmail = '';
   showAuth();
@@ -8256,6 +8284,117 @@ document.addEventListener('click', function(e) {
   }
 });
 
+// ── Sélection de portefeuille ─────────────────────────────────────────────────
+function showPortfolioSelect() {
+  var list = getPortfolios();
+  var root = document.getElementById('port-select');
+  if (!root) return;
+
+  function _render() {
+    var curList = getPortfolios();
+    var itemsHtml = curList.length === 0
+      ? '<div class="psel-empty">Aucun portefeuille. Crée-en un ci-dessous.</div>'
+      : curList.map(function(name) {
+          var initial = name.trim().charAt(0).toUpperCase();
+          return '<div class="psel-item" data-portname="'+_esc(name)+'" onclick="window._pselOpen(\''+_esc(name).replace(/'/g,"\\'")+'\')">'
+               + '<div class="psel-item-icon">'+_esc(initial)+'</div>'
+               + '<div class="psel-item-name">'+_esc(name)+'</div>'
+               + '<button class="psel-item-del" title="Supprimer" onclick="event.stopPropagation();window._pselDel(\''+_esc(name).replace(/'/g,"\\'")+'\')">&times;</button>'
+               + '</div>';
+        }).join('');
+
+    root.innerHTML = '<div class="psel-card">'
+      + '<div class="psel-logo"><div class="psel-logo-mark">Y</div></div>'
+      + '<h2 class="psel-title">Mes portefeuilles</h2>'
+      + '<p class="psel-sub">Sélectionne ou crée un portefeuille</p>'
+      + '<div class="psel-list" id="psel-list">'+itemsHtml+'</div>'
+      + '<hr class="psel-divider">'
+      + '<div class="psel-new">'
+      + '<input id="psel-input" type="text" placeholder="Nom du nouveau portefeuille" maxlength="40" autocomplete="off">'
+      + '<button class="psel-new-btn" onclick="window._pselCreate()">+ Créer</button>'
+      + '</div>'
+      + '<button class="psel-signout" onclick="authSignOut()">Se déconnecter</button>'
+      + '</div>';
+
+    var inp = document.getElementById('psel-input');
+    if (inp) {
+      inp.addEventListener('keydown', function(e){ if(e.key==='Enter') window._pselCreate(); });
+    }
+  }
+
+  window._pselOpen = function(name) {
+    root.style.opacity = '0';
+    root.style.transition = 'opacity .25s';
+    setTimeout(function(){
+      root.style.display = 'none';
+      root.style.opacity = '';
+      root.style.transition = '';
+      // Update menu account section
+      var menuSec = document.getElementById('menuAccountSection');
+      var menuEmail = document.getElementById('menuAccountEmail');
+      if(menuSec) menuSec.style.display = 'block';
+      if(menuEmail && _sbUser) menuEmail.textContent = '✉ ' + (_sbUser.email || '');
+      loadPortfolio(name);
+      updateAll();
+      fetchEurUsdRate().then(function(){ fetchAllPrices(); });
+    }, 250);
+  };
+
+  window._pselDel = function(name) {
+    if (!confirm('Supprimer "'+name+'" et toutes ses données ?')) return;
+    var curList = getPortfolios().filter(function(p){ return p !== name; });
+    savePortfolios(curList);
+    var suffixes = ['tx','px','cash','prefs','px_manual','avg_manual','tv_manual','upl_manual','cash_manual','cash_usd_manual','cash_eur_manual','donut_colors','avatar'];
+    suffixes.forEach(function(s){ localStorage.removeItem(portfolioKey(name, s)); });
+    if (_sbUser) sbSaveAllPortfolios();
+    _render();
+  };
+
+  window._pselCreate = function() {
+    var inp = document.getElementById('psel-input');
+    var name = inp ? inp.value.trim() : '';
+    if (!name) { if(inp){inp.focus();inp.style.borderColor='var(--red)';setTimeout(function(){inp.style.borderColor='';},1200);} return; }
+    var curList = getPortfolios();
+    if (curList.includes(name)) { if(inp){inp.focus();} notify('Ce nom existe déjà','err'); return; }
+    curList.push(name);
+    savePortfolios(curList);
+    localStorage.setItem('y26_last_portfolio', name);
+    if (inp) inp.value = '';
+    if (_sbUser) sbSaveAllPortfolios();
+    window._pselOpen(name);
+  };
+
+  root.style.display = 'flex';
+  _render();
+}
+
+// ── Save ALL portfolios to Supabase (used when creating/deleting portfolios) ──
+async function sbSaveAllPortfolios() {
+  var sb = getSupabase();
+  if (!sb || !_sbUser) return;
+  try {
+    var list = getPortfolios();
+    var data = {};
+    data['y26_portfolios'] = JSON.stringify(list);
+    data['y26_last_portfolio'] = CURRENT_PORTFOLIO || (list[0] || '');
+    var suffixes = ['tx','px','prefs','cash','px_manual','avg_manual','tv_manual','upl_manual','cash_manual','cash_usd_manual','cash_eur_manual','donut_colors'];
+    list.forEach(function(name) {
+      suffixes.forEach(function(s) {
+        var k = portfolioKey(name, s);
+        var v = localStorage.getItem(k);
+        if (v !== null) data[k] = v;
+      });
+    });
+    var ts = new Date().toISOString();
+    var check = await sb.from('portfolios').select('id').eq('user_id', _sbUser.id).single();
+    if (check.data && check.data.id) {
+      await sb.from('portfolios').update({ data: data, updated_at: ts }).eq('user_id', _sbUser.id);
+    } else {
+      await sb.from('portfolios').insert({ user_id: _sbUser.id, data: data, updated_at: ts });
+    }
+  } catch(e) { console.warn('sbSaveAll error:', e); }
+}
+
 // ── After login (auth or auto-restore) ───────────────────────────────────────
 async function afterAuthLogin(preferredPortfolio) {
   var sb = getSupabase();
@@ -8277,19 +8416,47 @@ async function afterAuthLogin(preferredPortfolio) {
   } catch(e) {
     console.warn('Cloud load failed, using localStorage:', e);
   }
-  if (!portfolioName) {
-    var list = getPortfolios();
-    portfolioName = list.length > 0 ? list[0] : 'Mon Portfolio';
-    if (!list.includes(portfolioName)) { list.push(portfolioName); savePortfolios(list); }
-  }
+  // Update menu email display
   var menuSec = document.getElementById('menuAccountSection');
   var menuEmail = document.getElementById('menuAccountEmail');
   if(menuSec) menuSec.style.display = 'block';
   if(menuEmail && _sbUser) menuEmail.textContent = '✉ ' + (_sbUser.email || '');
+
+  var list = getPortfolios();
+
+  // If a specific portfolio was requested, open it directly
+  if (preferredPortfolio && list.includes(preferredPortfolio)) {
+    _hideAuth();
+    loadPortfolio(preferredPortfolio);
+    updateAll();
+    fetchEurUsdRate().then(function(){ fetchAllPrices(); });
+    return;
+  }
+
+  // If no portfolios exist yet, create a default one and open it
+  if (list.length === 0) {
+    var defaultName = 'Mon Portfolio';
+    list.push(defaultName);
+    savePortfolios(list);
+    _hideAuth();
+    loadPortfolio(defaultName);
+    updateAll();
+    fetchEurUsdRate().then(function(){ fetchAllPrices(); });
+    return;
+  }
+
+  // If exactly one portfolio exists, open it directly
+  if (list.length === 1) {
+    _hideAuth();
+    loadPortfolio(list[0]);
+    updateAll();
+    fetchEurUsdRate().then(function(){ fetchAllPrices(); });
+    return;
+  }
+
+  // Multiple portfolios — show the picker
   _hideAuth();
-  loadPortfolio(portfolioName);
-  updateAll();
-  fetchEurUsdRate().then(function(){ fetchAllPrices(); });
+  showPortfolioSelect();
 }
 
 // ── Build portfolio snapshot for cloud ──────────────────────────────────────
