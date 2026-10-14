@@ -253,23 +253,72 @@ td.td-center{text-align:center!important}
 @media(max-width:1100px){.kg{grid-template-columns:repeat(3,1fr)}.charts-row{grid-template-columns:1fr}}
 @media(max-width:760px){.app{grid-template-columns:1fr}.sidebar{display:none}.main{padding:14px}.kg{grid-template-columns:repeat(2,1fr)}}
 tbody tr{animation:fi .18s ease}@keyframes fi{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
-/* ─── LOGIN SCREEN ──────────────────────────────────────────────────────────── */
-#loginScreen{position:fixed;inset:0;background:#05070a;z-index:99999;display:flex;align-items:center;justify-content:center;}
-.login-box{width:380px;max-width:calc(100vw - 32px);max-height:calc(100vh - 40px);overflow-y:auto;padding:36px 32px;background:var(--bg2);border:1px solid var(--b1);border-radius:18px;box-shadow:0 24px 80px rgba(0,0,0,.7);text-align:center;}
-.login-logo{width:56px;height:56px;border-radius:14px;background:rgba(59,130,246,.12);border:1.5px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:var(--gold2);margin:0 auto 20px;font-family:"Inter",sans-serif;}
-.login-title{font-size:22px;font-weight:700;color:var(--t1);margin-bottom:4px;font-family:"Inter",sans-serif;letter-spacing:-0.4px}
-.login-sub{font-size:12px;color:var(--t3);margin-bottom:20px;font-family:"Inter",sans-serif;}
-.login-label{font-size:10.5px;color:var(--t3);font-family:"Inter",sans-serif;text-align:left;margin-bottom:6px;letter-spacing:.06em;}
-.login-input{width:100%;background:var(--bg4);border:1.5px solid var(--b2);border-radius:8px;padding:11px 14px;font-size:14px;color:var(--t1);font-family:"Inter",sans-serif;outline:none;box-sizing:border-box;transition:border .15s;}
-.login-input:focus{border-color:var(--gold);}
-.login-select{width:100%;background:var(--bg4);border:1.5px solid var(--b2);border-radius:8px;padding:11px 14px;font-size:13px;color:var(--t1);font-family:"Inter",sans-serif;outline:none;box-sizing:border-box;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;}
-.login-or{color:var(--t3);font-size:11px;font-family:"Inter",sans-serif;margin:16px 0;display:flex;align-items:center;gap:10px;}
-.login-or::before,.login-or::after{content:'';flex:1;height:1px;background:var(--b1);}
-.login-btn{width:100%;padding:12px;background:var(--gold);color:#000;font-weight:700;font-family:"Inter",sans-serif;font-size:13px;border:none;border-radius:8px;cursor:pointer;transition:opacity .15s;margin-top:14px;}
-.login-btn:hover{opacity:.85;}
-.login-btn.secondary{background:transparent;border:1.5px solid var(--b2);color:var(--t2);margin-top:8px;}
-.login-btn.secondary:hover{border-color:var(--gold);color:var(--gold);}
-.login-err{color:var(--red);font-size:11.5px;font-family:"Inter",sans-serif;margin-top:10px;min-height:16px;}
+/* ─── AUTH SCREEN (split-screen) ──────────────────────────────────────────── */
+/* Variables mappées sur le design system */
+:root{--surface:var(--bg2);--surface-2:var(--bg3);--line:var(--b1);--muted:var(--t3);--fg:var(--t1);--accent:var(--gold);--earn:var(--green);--spend:var(--red);--shadow:0 8px 32px rgba(0,0,0,.4);--font-display:"Inter",sans-serif}
+.auth{position:fixed;inset:0;z-index:99999;background:var(--bg);overflow:auto;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr)}
+.auth-show{position:relative;overflow:hidden;padding:48px clamp(32px,5vw,72px);display:flex;flex-direction:column;justify-content:space-between;gap:40px;background:radial-gradient(120% 90% at 0% 0%,color-mix(in srgb,var(--accent) 30%,transparent),transparent 60%),radial-gradient(90% 70% at 100% 100%,color-mix(in srgb,var(--earn) 18%,transparent),transparent 60%),var(--surface);border-right:1px solid var(--line)}
+.auth-show .brand{font-size:22px;font-weight:800;letter-spacing:-.5px;color:var(--fg)}
+.auth-show h2{margin:0;font-family:var(--font-display);font-weight:800;font-size:clamp(34px,3.6vw,52px);line-height:1.02;letter-spacing:-.01em;text-wrap:balance;max-width:13ch}
+.auth-show h2 em{font-style:normal;color:var(--accent)}
+.auth-show .lead{margin:14px 0 0;color:var(--muted);font-size:16px;max-width:40ch}
+.show-card{background:color-mix(in srgb,var(--bg) 70%,transparent);border:1px solid var(--line);border-radius:20px;padding:20px;max-width:440px;backdrop-filter:blur(6px);box-shadow:var(--shadow)}
+.show-row{display:flex;align-items:center;gap:18px}
+.show-donut{width:96px;height:96px;border-radius:50%;flex:none;background:conic-gradient(#3b82f6 0 28%,#22c55e 28% 52%,#f59e0b 52% 71%,#f43f5e 71% 85%,#a855f7 85% 100%);-webkit-mask:radial-gradient(circle,transparent 58%,#000 59%);mask:radial-gradient(circle,transparent 58%,#000 59%)}
+.show-legend{display:flex;flex-direction:column;gap:7px;font-size:13.5px;flex:1;min-width:0}
+.show-legend span{display:flex;align-items:center;gap:8px}
+.show-legend i{width:9px;height:9px;border-radius:3px;flex:none}
+.show-bars{display:flex;align-items:flex-end;gap:7px;height:70px;margin-top:18px}
+.show-bars div{flex:1;border-radius:5px 5px 2px 2px}
+.show-points{display:flex;flex-wrap:wrap;gap:8px}
+.show-points span{font-size:13px;font-weight:600;padding:6px 12px;border-radius:999px;background:color-mix(in srgb,var(--fg) 7%,transparent);border:1px solid var(--line)}
+.auth-side{display:grid;place-items:center;padding:40px 24px calc(40px + env(safe-area-inset-bottom,0px))}
+.auth-card{width:100%;max-width:400px;display:flex;flex-direction:column;gap:16px}
+.auth-logo{display:none;align-items:center;gap:12px;justify-content:center;margin-bottom:4px}
+.auth-logo svg{width:44px;height:44px}
+.auth-card h1{margin:0;font-family:var(--font-display);font-weight:800;font-size:28px;line-height:1.1}
+.auth-card .sub{margin:-6px 0 0;color:var(--muted);font-size:14.5px}
+.auth-tabs{display:grid;grid-template-columns:1fr 1fr;background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:4px;gap:4px}
+.auth-tabs button{border:0;background:transparent;border-radius:10px;padding:9px;font-weight:700;color:var(--muted);cursor:pointer;font-size:14px;font-family:"Inter",sans-serif;transition:all .15s}
+.auth-tabs button[aria-pressed="true"]{background:var(--surface-2);color:var(--fg);box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.a-field{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--muted)}
+.a-field .field{font-size:15px;padding:12px 14px;background:var(--surface);border:1.5px solid var(--line);border-radius:10px;color:var(--fg);font-family:"Inter",sans-serif;outline:none;transition:border .15s;width:100%;box-sizing:border-box}
+.a-field .field:focus{border-color:var(--accent)}
+.pw{position:relative}
+.pw .field{padding-right:48px}
+.eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:transparent;width:38px;height:38px;border-radius:9px;display:grid;place-items:center;color:var(--muted);cursor:pointer}
+.eye:hover{color:var(--fg);background:var(--surface-2)}
+.eye svg{width:19px;height:19px}
+.a-row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.check{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:500;color:var(--fg);cursor:pointer;user-select:none}
+.check input{width:18px;height:18px;accent-color:var(--accent);margin:0}
+.a-link{border:0;background:transparent;color:var(--accent);font-weight:600;font-size:14px;padding:4px 0;cursor:pointer;font-family:"Inter",sans-serif}
+.a-link:hover{text-decoration:underline}
+.auth-card .primary{width:100%;padding:14px;font-size:16px;background:var(--gold);color:#000;font-weight:700;font-family:"Inter",sans-serif;border:none;border-radius:10px;cursor:pointer;transition:opacity .15s}
+.auth-card .primary:hover{opacity:.88}
+.auth-card .primary:disabled{opacity:.6;cursor:default}
+.a-hint{font-size:12.5px;color:var(--muted);margin-top:-8px}
+.auth-msg{font-size:14px;min-height:20px;line-height:1.4}
+.auth-msg.err{color:var(--red)}.auth-msg.ok{color:var(--earn)}
+.auth-msg:empty{display:none}
+.auth-note{font-size:12.5px;color:var(--muted);margin:0;padding:10px 12px;border-radius:11px;background:var(--surface);border:1px solid var(--line)}
+.a-back{align-self:flex-start}
+/* Login select (local portfolios) */
+.login-select{width:100%;background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:12px 14px;font-size:14px;color:var(--fg);font-family:"Inter",sans-serif;outline:none;box-sizing:border-box;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+.login-select:focus{border-color:var(--accent)}
+.local-card h3{margin:0 0 12px;font-size:14px;font-weight:700;color:var(--fg)}
+.local-card .primary{margin-top:4px}
+.local-or{color:var(--muted);font-size:11px;font-family:"Inter",sans-serif;margin:14px 0;display:flex;align-items:center;gap:10px}
+.local-or::before,.local-or::after{content:'';flex:1;height:1px;background:var(--line)}
+@media(max-width:900px){
+  .auth{grid-template-columns:1fr}
+  .auth-show{display:none}
+  .auth-logo{display:flex}
+  .auth-side{align-items:start;padding-top:calc(48px + env(safe-area-inset-top,0px))}
+  .auth-card h1{text-align:center}
+  .auth-card .sub{text-align:center}
+  .auth-msg{text-align:center}
+}
 
 #logoBtn:hover #logoChevron{opacity:1!important}
 #logoBtn #logoChevron{opacity:0}
@@ -1394,41 +1443,6 @@ function saveCurrentPortfolio() {
   }
 }
 
-// Login UI helpers
-function initLoginScreen() {
-  var portfolios = getPortfolios();
-  var sel = document.getElementById('loginSelect');
-  var existing = document.getElementById('loginExisting');
-  var newDiv = document.getElementById('loginNew');
-  if(portfolios.length > 0) {
-    existing.style.display = 'block';
-    sel.innerHTML = '<option value="">— Sélectionner —</option>';
-    portfolios.forEach(function(p) {
-      var opt = document.createElement('option');
-      opt.value = p; opt.textContent = p;
-      sel.appendChild(opt);
-    });
-    newDiv.querySelector('.login-label').textContent = 'NOUVEAU PORTEFEUILLE';
-    newDiv.querySelector('.login-btn').textContent = 'Créer & Accéder';
-  } else {
-    existing.style.display = 'none';
-  }
-}
-function loginWithExisting() {
-  var sel = document.getElementById('loginSelect');
-  var name = sel.value.trim();
-  if(!name) { document.getElementById('loginErr').textContent = 'Sélectionne un portefeuille.'; return; }
-  loginEnter(name);
-}
-function loginCreate() {
-  var inp = document.getElementById('loginName');
-  var name = inp.value.trim();
-  if(!name) { document.getElementById('loginErr').textContent = 'Entre un nom.'; return; }
-  if(name.length < 2) { document.getElementById('loginErr').textContent = 'Nom trop court (2 car. min).'; return; }
-  var list = getPortfolios();
-  if(!list.includes(name)) { list.push(name); savePortfolios(list); }
-  loginEnter(name);
-}
 function loginEnter(name) {
   // Auto-migrate old data (y26v5_tx / y26v5_px) into this portfolio if it's empty
   var newTxKey = portfolioKey(name,'tx');
@@ -1442,14 +1456,9 @@ function loginEnter(name) {
       if(oldPx && oldPx !== '{}') localStorage.setItem(newPxKey, oldPx);
     }
   }
-  var screen = document.getElementById('loginScreen');
-  if(!screen) return;
-  screen.style.opacity = '0';
-  screen.style.transition = 'opacity .3s';
-  setTimeout(function() { screen.style.display = 'none'; }, 300);
+  _hideAuth();
   loadPortfolio(name);
   updateAll();
-  // Auto-fetch EUR/USD rate then all prices (donut rendered inside fetchAllPrices)
   fetchEurUsdRate().then(function(){ fetchAllPrices(); });
 }
 function toggleUserMenu() {
@@ -1532,14 +1541,9 @@ function renamePortfolio() {
 function switchPortfolio() {
   document.getElementById('userMenuDropdown').style.display = 'none';
   saveCurrentPortfolio();
-  // Reset state
   TX = []; PX = {}; CURRENT_PORTFOLIO = null;
-  var screen = document.getElementById('loginScreen');
-  if(!screen) return;
-  screen.style.display = 'flex'; screen.style.opacity = '1';
-  initLoginScreen();
-  document.getElementById('loginName').value = '';
-  document.getElementById('loginErr').textContent = '';
+  _authMode = _sbUser ? 'login' : 'local';
+  showAuth();
 }
 function deletePortfolio() {
   if(!CURRENT_PORTFOLIO) return;
@@ -1553,10 +1557,8 @@ function deletePortfolio() {
   localStorage.removeItem(portfolioKey(CURRENT_PORTFOLIO,'prefs'));
   localStorage.removeItem('y26_last_portfolio');
   TX = []; PX = {}; CURRENT_PORTFOLIO = null;
-  var screen = document.getElementById('loginScreen');
-  if(!screen) return;
-  screen.style.display = 'flex'; screen.style.opacity = '1';
-  initLoginScreen();
+  _authMode = _sbUser ? 'login' : 'local';
+  showAuth();
 }
 // Close menu on outside click
 document.addEventListener('click', function(e) {
@@ -4114,25 +4116,23 @@ document.addEventListener('DOMContentLoaded', function() {
   setDashCcy(DASH_CCY);
   // Fetch EUR/USD rate
   fetchEurUsdRate();
-  initLoginScreen();
 
   // Try Supabase session first, fallback to localStorage
   checkExistingSession().then(function(hasSession) {
     if (hasSession) {
-      // Logged in via Supabase — load from cloud
       afterAuthLogin();
     } else {
-      // No Supabase session — check localStorage for local portfolios
       var last = localStorage.getItem('y26_last_portfolio');
       var list = getPortfolios();
       if(last && list.includes(last)) {
-        var screen = document.getElementById('loginScreen');
-        if(screen) screen.style.display = 'none';
         loadPortfolio(last);
         updateAll();
         fetchEurUsdRate().then(function(){ fetchAllPrices(); });
+      } else {
+        // Afficher l'écran d'auth
+        _authMode = 'login';
+        showAuth();
       }
-      // else: login screen stays visible
     }
   });
 });
@@ -7911,81 +7911,12 @@ function resetCashCcy(ccy){ if(ccy==='usd')CASH_USD_MANUAL=null; else CASH_EUR_M
 
 </script>
 
-<!-- ─── LOGIN SCREEN ──────────────────────────────────────────────────────── -->
-<div id="loginScreen">
-  <div class="login-box">
-    <div class="login-logo">Y</div>
-    <div class="login-title">Portfolio Tracker</div>
-    <div class="login-sub">Gestion de portefeuille personnel</div>
-
-    <!-- Tab switcher: Auth / Local -->
-    <div id="loginTabs" style="display:flex;gap:0;margin-bottom:20px;border:1px solid var(--b2);border-radius:8px;overflow:hidden">
-      <button id="tabAuthBtn" onclick="showLoginTab('auth')" style="flex:1;padding:9px;background:var(--gold);color:#fff;border:none;font-size:12.5px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;transition:all .2s">Compte</button>
-      <button id="tabLocalBtn" onclick="showLoginTab('local')" style="flex:1;padding:9px;background:transparent;color:var(--t2);border:none;font-size:12.5px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;transition:all .2s">Local</button>
-    </div>
-
-    <!-- Auth panel -->
-    <div id="loginPanelAuth">
-      <!-- Sign In -->
-      <div id="panelSignIn">
-        <div class="login-label">EMAIL</div>
-        <input id="authEmail" class="login-input" type="email" placeholder="votre@email.com" autocomplete="email" onkeydown="if(event.key==='Enter')authSignIn()">
-        <div class="login-label" style="margin-top:12px">MOT DE PASSE</div>
-        <input id="authPassword" class="login-input" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')authSignIn()">
-        <button class="login-btn" onclick="authSignIn()" id="btnSignIn">Connexion</button>
-        <div class="login-or">pas encore de compte ?</div>
-        <button onclick="showAuthPanel('signup')" style="width:100%;padding:9px;background:transparent;color:var(--gold2);border:1px solid var(--b2);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">Créer un compte</button>
-        <div style="margin-top:10px;text-align:center">
-          <button onclick="showAuthPanel('reset')" style="background:none;border:none;color:var(--t3);font-size:12px;cursor:pointer;font-family:Inter,sans-serif">Mot de passe oublié ?</button>
-        </div>
-      </div>
-      <!-- Sign Up -->
-      <div id="panelSignUp" style="display:none">
-        <div class="login-label">EMAIL</div>
-        <input id="authEmailReg" class="login-input" type="email" placeholder="votre@email.com" autocomplete="email">
-        <div class="login-label" style="margin-top:12px">MOT DE PASSE</div>
-        <input id="authPasswordReg" class="login-input" type="password" placeholder="6 caractères min" autocomplete="new-password">
-        <div class="login-label" style="margin-top:12px">NOM DU PORTEFEUILLE</div>
-        <input id="authPortName" class="login-input" type="text" placeholder="ex: Mon Portfolio" maxlength="32" onkeydown="if(event.key==='Enter')authSignUp()">
-        <button class="login-btn" onclick="authSignUp()" id="btnSignUp">Créer le compte</button>
-        <div style="margin-top:10px;text-align:center">
-          <button onclick="showAuthPanel('signin')" style="background:none;border:none;color:var(--t3);font-size:12px;cursor:pointer;font-family:Inter,sans-serif">← Retour à la connexion</button>
-        </div>
-      </div>
-      <!-- Reset password -->
-      <div id="panelReset" style="display:none">
-        <div style="font-size:13px;color:var(--t2);margin-bottom:14px;text-align:center;line-height:1.5">Entre ton email pour recevoir un lien de réinitialisation.</div>
-        <div class="login-label">EMAIL</div>
-        <input id="authEmailReset" class="login-input" type="email" placeholder="votre@email.com">
-        <button class="login-btn" onclick="authResetPassword()">Envoyer le lien</button>
-        <div style="margin-top:10px;text-align:center">
-          <button onclick="showAuthPanel('signin')" style="background:none;border:none;color:var(--t3);font-size:12px;cursor:pointer;font-family:Inter,sans-serif">← Retour</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Local panel -->
-    <div id="loginPanelLocal" style="display:none">
-      <!-- Existing portfolios -->
-      <div id="loginExisting" style="display:none">
-        <div class="login-label">PORTEFEUILLE EXISTANT</div>
-        <select id="loginSelect" class="login-select">
-          <option value="">— Sélectionner —</option>
-        </select>
-        <button class="login-btn" onclick="loginWithExisting()">Accéder</button>
-        <div class="login-or">ou créer un nouveau</div>
-      </div>
-      <!-- New portfolio -->
-      <div id="loginNew">
-        <div class="login-label">NOM DU PORTEFEUILLE</div>
-        <input id="loginName" class="login-input" type="text" placeholder="ex: Portfolio Tracker" maxlength="32" onkeydown="if(event.key==='Enter')loginCreate()">
-        <button class="login-btn" onclick="loginCreate()">Créer &amp; Accéder</button>
-      </div>
-    </div>
-
-    <div class="login-err" id="loginErr"></div>
-  </div>
-</div>
+<!-- ─── AUTH ROOT (split-screen, injecté dynamiquement) ───────────────────── -->
+<div id="auth-root"></div>
+<!-- local portfolio select (utilisé dans le panel local) -->
+<select id="loginSelect" class="login-select" style="display:none">
+  <option value="">— Sélectionner —</option>
+</select>
 
 
 <script>
@@ -8000,8 +7931,10 @@ function resetCashCcy(ccy){ if(ccy==='usd')CASH_USD_MANUAL=null; else CASH_EUR_M
 // ═══════════════════════════════════════════════════════════════════════════
 // SUPABASE AUTH + CLOUD SYNC
 // ═══════════════════════════════════════════════════════════════════════════
-var _sb = null; // Supabase client
-var _sbUser = null; // Current user
+var _sb = null;
+var _sbUser = null;
+var _authMode = 'login'; // 'login' | 'signup' | 'forgot' | 'local'
+var _authEmail = '';
 
 function getSupabase() {
   if (_sb) return _sb;
@@ -8011,142 +7944,260 @@ function getSupabase() {
   return _sb;
 }
 
-// ── Auth Tab UI ──────────────────────────────────────────────────────────────
-function showLoginTab(tab) {
-  try {
-    var panelAuth = document.getElementById('loginPanelAuth');
-    var panelLocal = document.getElementById('loginPanelLocal');
-    var btnAuth = document.getElementById('tabAuthBtn');
-    var btnLocal = document.getElementById('tabLocalBtn');
-    if (tab === 'auth') {
-      if(panelAuth) { panelAuth.style.cssText = 'display:block!important'; }
-      if(panelLocal) { panelLocal.style.cssText = 'display:none!important'; }
-      if(btnAuth) { btnAuth.style.background = 'var(--gold)'; btnAuth.style.color = '#fff'; }
-      if(btnLocal) { btnLocal.style.background = 'transparent'; btnLocal.style.color = 'var(--t2)'; }
-    } else {
-      if(panelAuth) { panelAuth.style.cssText = 'display:none!important'; }
-      if(panelLocal) { panelLocal.style.cssText = 'display:block!important'; }
-      if(btnAuth) { btnAuth.style.background = 'transparent'; btnAuth.style.color = 'var(--t2)'; }
-      if(btnLocal) { btnLocal.style.background = 'var(--gold)'; btnLocal.style.color = '#fff'; }
-      try { initLoginScreen(); } catch(e) {}
-    }
-    var err = document.getElementById('loginErr');
-    if(err) err.textContent = '';
-  } catch(e) { console.error('showLoginTab error:', e); }
+// ── Helpers ──────────────────────────────────────────────────────────────────
+var EYE_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+var EYE_OFF_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18M10.6 5.1A10.9 10.9 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.1M6.1 6.1C3.6 7.8 2 12 2 12s3.6 7 10 7c1.8 0 3.4-.5 4.8-1.3M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
+var LOGO_SVG = '<svg viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="var(--surface-2)"/><rect x="12" y="32" width="10" height="18" rx="3" fill="var(--spend)"/><rect x="27" y="24" width="10" height="26" rx="3" fill="var(--accent)"/><rect x="42" y="14" width="10" height="36" rx="3" fill="var(--earn)"/></svg>';
+
+function _esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function _pwField(id, label, ac) {
+  return '<label class="a-field">'+label+'<div class="pw"><input id="'+id+'" class="field" type="password" autocomplete="'+ac+'" minlength="6" required><button type="button" class="eye" data-eye="'+id+'" aria-label="Afficher" aria-pressed="false">'+EYE_ICON+'</button></div></label>';
 }
 
-function showAuthPanel(panel) {
-  var map = { 'signin': 'panelSignIn', 'signup': 'panelSignUp', 'reset': 'panelReset' };
-  var targetId = map[panel];
-  ['panelSignIn','panelSignUp','panelReset'].forEach(function(id) {
-    var el = document.getElementById(id);
-    if(el) el.style.display = (id === targetId) ? 'block' : 'none';
+function _authError(err) {
+  var t = String(err && err.message || '');
+  if (/Invalid login/i.test(t)) return 'E-mail ou mot de passe incorrect.';
+  if (/not confirmed/i.test(t)) return 'Ton e-mail n\'est pas encore confirmé.';
+  if (/already registered/i.test(t)) return 'Un compte existe déjà avec cette adresse : connecte-toi.';
+  if (/signups? not allowed/i.test(t)) return 'Les inscriptions sont fermées.';
+  if (/rate limit|too many/i.test(t)) return 'Trop de demandes. Réessaie dans une heure.';
+  if (/should be different/i.test(t)) return 'Choisis un mot de passe différent.';
+  if (/at least/i.test(t) && /password/i.test(t)) return 'Le mot de passe doit faire au moins 6 caractères.';
+  if (/invalid/i.test(t) && /email/i.test(t)) return 'Adresse e-mail invalide.';
+  return 'Erreur : ' + (t || 'Vérifiez votre connexion.');
+}
+
+// ── Show auth screen ─────────────────────────────────────────────────────────
+function showAuth(msg, kind) {
+  var m = _authMode;
+  var head = {
+    login: ['Content de te revoir', 'Connecte-toi pour accéder à ton portefeuille.'],
+    signup: ['Créer ton compte', 'Accède à ton portefeuille depuis n\'importe quel appareil.'],
+    forgot: ['Mot de passe oublié', 'Indique ton e-mail pour recevoir un lien de réinitialisation.'],
+    local: ['Accès local', 'Sans compte, tes données restent sur cet appareil.']
+  }[m] || ['Portfolio Tracker',''];
+
+  var body = '';
+  if (m === 'login') {
+    body = '<label class="a-field">E-mail<input id="a-email" class="field" type="email" autocomplete="email" inputmode="email" required value="'+_esc(_authEmail)+'"></label>'
+         + _pwField('a-pass','Mot de passe','current-password')
+         + '<div class="a-row"><span></span><button class="a-link" type="button" data-amode="forgot">Mot de passe oublié ?</button></div>'
+         + '<button class="primary" type="submit" id="a-submit">Se connecter</button>';
+  } else if (m === 'signup') {
+    body = '<label class="a-field">E-mail<input id="a-email" class="field" type="email" autocomplete="email" inputmode="email" required value="'+_esc(_authEmail)+'"></label>'
+         + _pwField('a-pass','Mot de passe','new-password')
+         + '<div class="a-hint">6 caractères minimum.</div>'
+         + _pwField('a-pass2','Confirme le mot de passe','new-password')
+         + '<button class="primary" type="submit" id="a-submit">Créer mon compte</button>';
+  } else if (m === 'forgot') {
+    body = '<label class="a-field">E-mail<input id="a-email" class="field" type="email" autocomplete="email" inputmode="email" required value="'+_esc(_authEmail)+'"></label>'
+         + '<button class="primary" type="submit" id="a-submit">Envoyer le lien</button>'
+         + '<button class="a-link a-back" type="button" data-amode="login">← Retour à la connexion</button>';
+  } else if (m === 'local') {
+    // Build existing portfolios list
+    var existingList = getPortfolios();
+    var selectHtml = '';
+    if (existingList.length > 0) {
+      selectHtml = '<label class="a-field">Portefeuille existant<select id="a-local-select" class="login-select"><option value="">— Sélectionner —</option>'
+        + existingList.map(function(n){ return '<option value="'+_esc(n)+'">'+_esc(n)+'</option>'; }).join('')
+        + '</select></label>'
+        + '<button class="primary" type="button" id="a-local-open" onclick="_localOpen()">Accéder</button>'
+        + '<div class="local-or">ou créer un nouveau</div>';
+    }
+    body = selectHtml
+         + '<label class="a-field">Nouveau portefeuille<input id="a-local-name" class="field" type="text" placeholder="ex: Mon Portfolio" maxlength="32"></label>'
+         + '<button class="primary" type="submit" id="a-submit">Créer &amp; Accéder</button>';
+  }
+
+  var tabsHtml = '';
+  if (m === 'login' || m === 'signup') {
+    tabsHtml = '<div class="auth-tabs" role="group">'
+             + '<button type="button" data-amode="login" aria-pressed="'+(m==='login')+'">Connexion</button>'
+             + '<button type="button" data-amode="signup" aria-pressed="'+(m==='signup')+'">Créer un compte</button>'
+             + '</div>';
+  }
+
+  var barsHtml = [38,62,45,80,52,70,58,90,66,48,74,84].map(function(h, i){
+    return '<div style="height:'+h+'%;background:'+(i%2?'var(--earn)':'var(--accent)')+'opacity:'+(0.55+i*0.035)+'"></div>';
+  }).join('');
+
+  document.getElementById('auth-root').innerHTML =
+    '<div class="auth">'
+    + '<aside class="auth-show" aria-hidden="true">'
+    +   '<div class="brand">Y26 <b>Capital</b></div>'
+    +   '<div>'
+    +     '<h2>Ton portefeuille, <em>toujours avec toi.</em></h2>'
+    +     '<p class="lead">Suis tes actions en temps réel. Analyse tes gains et pertes. Synchronisé sur tous tes appareils.</p>'
+    +   '</div>'
+    +   '<div class="show-card">'
+    +     '<div class="show-row">'
+    +       '<div class="show-donut"></div>'
+    +       '<div class="show-legend">'
+    +         '<span><i style="background:#3b82f6"></i>Tech</span>'
+    +         '<span><i style="background:#22c55e"></i>Finance</span>'
+    +         '<span><i style="background:#f59e0b"></i>Luxe</span>'
+    +         '<span><i style="background:#f43f5e"></i>Santé</span>'
+    +       '</div>'
+    +     '</div>'
+    +     '<div class="show-bars">'
+    +       [38,62,45,80,52,70,58,90,66,48,74,84].map(function(h,i){
+            return '<div style="height:'+h+'%;background:'+(i%2?'var(--earn)':'var(--accent)')+';opacity:'+(0.55+i*0.035)+'"></div>';
+          }).join('')
+    +     '</div>'
+    +   '</div>'
+    +   '<div class="show-points">'
+    +     '<span>Temps réel</span><span>Multi-appareils</span><span>Données privées</span>'
+    +   '</div>'
+    + '</aside>'
+    + '<div class="auth-side">'
+    +   '<form class="auth-card" id="auth-form" novalidate>'
+    +     '<div class="auth-logo">'+LOGO_SVG+'<div class="brand" style="font-size:18px;font-weight:800">Y26 Capital</div></div>'
+    +     tabsHtml
+    +     '<div><h1>'+_esc(head[0])+'</h1></div>'
+    +     '<p class="sub">'+_esc(head[1])+'</p>'
+    +     body
+    +     '<div class="auth-msg '+(kind||'')+'" id="a-msg" role="status">'+_esc(msg||'')+'</div>'
+    +     (m !== 'local' ? '<div style="text-align:center;margin-top:4px"><button class="a-link" type="button" data-amode="local" style="font-size:12px;color:var(--muted)">Continuer sans compte (local)</button></div>' : '<div style="text-align:center;margin-top:4px"><button class="a-link" type="button" data-amode="login" style="font-size:12px;color:var(--muted)">← Connexion avec un compte</button></div>')
+    +   '</form>'
+    + '</div>'
+    + '</div>';
+
+  var root = document.getElementById('auth-root');
+  root.querySelectorAll('[data-amode]').forEach(function(b) {
+    b.addEventListener('click', function() {
+      var e = document.getElementById('a-email');
+      if (e) _authEmail = e.value.trim();
+      _authMode = b.dataset.amode;
+      showAuth();
+    });
   });
-  var err = document.getElementById('loginErr');
-  if(err) err.textContent = '';
+  root.querySelectorAll('[data-eye]').forEach(function(b) {
+    b.addEventListener('click', function() {
+      var inp = document.getElementById(b.dataset.eye);
+      var show = inp.type === 'password';
+      inp.type = show ? 'text' : 'password';
+      b.innerHTML = show ? EYE_OFF_ICON : EYE_ICON;
+      b.setAttribute('aria-pressed', String(show));
+      inp.focus();
+    });
+  });
+  var form = document.getElementById('auth-form');
+  if (form) form.addEventListener('submit', _onAuthSubmit);
 }
 
-// ── Sign In ──────────────────────────────────────────────────────────────────
-async function authSignIn() {
-  var sb = getSupabase();
-  if (!sb) { document.getElementById('loginErr').textContent = 'Supabase non disponible.'; return; }
-  var email = document.getElementById('authEmail').value.trim();
-  var password = document.getElementById('authPassword').value;
-  if (!email || !password) { document.getElementById('loginErr').textContent = 'Remplis tous les champs.'; return; }
-  var btn = document.getElementById('btnSignIn');
-  if(btn) { btn.textContent = 'Connexion…'; btn.disabled = true; }
-  try {
-    var result = await sb.auth.signInWithPassword({ email: email, password: password });
-    if (result.error) throw result.error;
-    _sbUser = result.data.user;
-    await afterAuthLogin();
-  } catch(e) {
-    document.getElementById('loginErr').textContent = 'Erreur : ' + (e.message || 'Connexion impossible.');
-    if(btn) { btn.textContent = 'Connexion'; btn.disabled = false; }
-  }
+function _localOpen() {
+  var sel = document.getElementById('a-local-select');
+  var name = sel ? sel.value : '';
+  if (!name) { var m = document.getElementById('a-msg'); if(m){m.className='auth-msg err';m.textContent='Sélectionne un portefeuille.';} return; }
+  _hideAuth();
+  loadPortfolio(name);
+  updateAll();
+  fetchEurUsdRate().then(function(){ fetchAllPrices(); });
 }
 
-// ── Sign Up ──────────────────────────────────────────────────────────────────
-async function authSignUp() {
-  var sb = getSupabase();
-  if (!sb) { document.getElementById('loginErr').textContent = 'Supabase non disponible.'; return; }
-  var email = document.getElementById('authEmailReg').value.trim();
-  var password = document.getElementById('authPasswordReg').value;
-  var portName = document.getElementById('authPortName').value.trim();
-  if (!email || !password || !portName) { document.getElementById('loginErr').textContent = 'Remplis tous les champs.'; return; }
-  if (password.length < 6) { document.getElementById('loginErr').textContent = 'Mot de passe trop court (6 car. min).'; return; }
-  if (portName.length < 2) { document.getElementById('loginErr').textContent = 'Nom du portefeuille trop court.'; return; }
-  var btn = document.getElementById('btnSignUp');
-  if(btn) { btn.textContent = 'Création…'; btn.disabled = true; }
-  try {
-    var result = await sb.auth.signUp({ email: email, password: password });
-    if (result.error) throw result.error;
-    _sbUser = result.data.user;
-    // Check if email confirmation required
-    if (!_sbUser || !_sbUser.id) {
-      document.getElementById('loginErr').style.color = 'var(--green)';
-      document.getElementById('loginErr').textContent = '✓ Vérifie ton email pour confirmer ton compte, puis connecte-toi.';
-      if(btn) { btn.textContent = 'Créer le compte'; btn.disabled = false; }
-      return;
-    }
-    // Create initial portfolio in localStorage then sync to cloud
+async function _onAuthSubmit(e) {
+  e.preventDefault();
+  var m = _authMode;
+  var msgEl = document.getElementById('a-msg');
+  var btn = document.getElementById('a-submit');
+  var fail = function(t) { if(msgEl){msgEl.className='auth-msg err';msgEl.textContent=t;} if(btn){btn.disabled=false;} };
+  var ok = function(t) { if(msgEl){msgEl.className='auth-msg ok';msgEl.textContent=t;} if(btn){btn.disabled=false;} };
+
+  if (m === 'local') {
+    // Create new local portfolio
+    var nameEl = document.getElementById('a-local-name');
+    var name = nameEl ? nameEl.value.trim() : '';
+    if (!name || name.length < 2) { fail('Donne un nom à ton portefeuille.'); return; }
     var list = getPortfolios();
-    if(!list.includes(portName)) { list.push(portName); savePortfolios(list); }
-    localStorage.setItem('y26_last_portfolio', portName);
-    var initialData = buildPortfolioData(portName);
-    await sbSaveData(portName, initialData);
-    await afterAuthLogin(portName);
-  } catch(e) {
-    document.getElementById('loginErr').textContent = 'Erreur : ' + (e.message || 'Inscription impossible.');
-    if(btn) { btn.textContent = 'Créer le compte'; btn.disabled = false; }
+    if (!list.includes(name)) { list.push(name); savePortfolios(list); }
+    localStorage.setItem('y26_last_portfolio', name);
+    _hideAuth();
+    loadPortfolio(name);
+    updateAll();
+    fetchEurUsdRate().then(function(){ fetchAllPrices(); });
+    return;
   }
-}
 
-// ── Reset password ────────────────────────────────────────────────────────────
-async function authResetPassword() {
+  var emailEl = document.getElementById('a-email');
+  var passEl = document.getElementById('a-pass');
+  var pass2El = document.getElementById('a-pass2');
+  var email = emailEl ? emailEl.value.trim() : '';
+  var pass = passEl ? passEl.value : '';
+  var pass2 = pass2El ? pass2El.value : '';
+  if (email) _authEmail = email;
+
+  if (m !== 'forgot' && !/^\S+@\S+\.\S+$/.test(email)) { fail('Adresse e-mail invalide.'); return; }
+  if ((m === 'login' || m === 'signup') && pass.length < 6) { fail('Mot de passe : 6 caractères minimum.'); return; }
+  if (m === 'signup' && pass !== pass2) { fail('Les mots de passe ne sont pas identiques.'); return; }
+
+  if(btn){btn.disabled=true;}
+  if(msgEl){msgEl.className='auth-msg';msgEl.textContent={login:'Connexion…',signup:'Création…',forgot:'Envoi…'}[m]||'';}
+
   var sb = getSupabase();
-  if (!sb) return;
-  var email = document.getElementById('authEmailReset').value.trim();
-  if (!email) { document.getElementById('loginErr').textContent = 'Entre ton email.'; return; }
+  if (!sb) { fail('Service non disponible.'); return; }
+
   try {
-    var result = await sb.auth.resetPasswordForEmail(email);
-    if (result.error) throw result.error;
-    document.getElementById('loginErr').style.color = 'var(--green)';
-    document.getElementById('loginErr').textContent = '✓ Email envoyé ! Vérifie ta boîte mail.';
-  } catch(e) {
-    document.getElementById('loginErr').textContent = 'Erreur : ' + (e.message || 'Impossible.');
+    if (m === 'login') {
+      var res = await sb.auth.signInWithPassword({email: email, password: pass});
+      if (res.error) throw res.error;
+      _sbUser = res.data.user;
+      await afterAuthLogin();
+    } else if (m === 'signup') {
+      var res2 = await sb.auth.signUp({email: email, password: pass});
+      if (res2.error) throw res2.error;
+      _sbUser = res2.data.user;
+      if (!_sbUser || !_sbUser.id) {
+        _authMode = 'login';
+        showAuth('Compte créé ! Vérifie ton e-mail pour le confirmer puis connecte-toi.', 'ok');
+        return;
+      }
+      // Create default portfolio
+      var portName = 'Mon Portfolio';
+      var portList = getPortfolios();
+      if (!portList.includes(portName)) { portList.push(portName); savePortfolios(portList); }
+      localStorage.setItem('y26_last_portfolio', portName);
+      var initialData = buildPortfolioData(portName);
+      await sbSaveData(portName, initialData);
+      await afterAuthLogin(portName);
+    } else if (m === 'forgot') {
+      var res3 = await sb.auth.resetPasswordForEmail(email);
+      if (res3.error) throw res3.error;
+      _authMode = 'login';
+      showAuth('Lien envoyé ! Vérifie ta boîte mail (et les indésirables).', 'ok');
+    }
+  } catch(err) {
+    fail(_authError(err));
   }
 }
 
 // ── Sign Out ──────────────────────────────────────────────────────────────────
 async function authSignOut() {
   var sb = getSupabase();
-  if (sb) { await sb.auth.signOut(); }
+  if (sb) { try { await sb.auth.signOut(); } catch(e){} }
   _sbUser = null;
   CURRENT_PORTFOLIO = null;
   TX = []; PX = {}; CASH_MOVEMENTS = [];
   var d = document.getElementById('userMenuDropdown');
   if(d) d.style.display = 'none';
-  var screen = document.getElementById('loginScreen');
-  if(screen) { screen.style.display = 'flex'; screen.style.opacity = '1'; }
-  showLoginTab('auth');
-  showAuthPanel('signin');
-  // Reset login error color
-  var err = document.getElementById('loginErr');
-  if(err) { err.style.color = ''; err.textContent = ''; }
+  _authMode = 'login';
+  _authEmail = '';
+  showAuth();
+}
+
+function _hideAuth() {
+  var root = document.getElementById('auth-root');
+  if (root) { root.style.opacity = '0'; root.style.transition = 'opacity .3s'; setTimeout(function(){ root.innerHTML = ''; root.style.opacity = ''; }, 300); }
 }
 
 // ── After login (auth or auto-restore) ───────────────────────────────────────
 async function afterAuthLogin(preferredPortfolio) {
   var sb = getSupabase();
   if (!_sbUser) return;
-  // Load portfolio list from Supabase
   var portfolioName = preferredPortfolio || null;
   try {
     var res = await sb.from('portfolios').select('data').eq('user_id', _sbUser.id).single();
     if (res.data && res.data.data) {
       var cloud = res.data.data;
-      // Migrate cloud data to localStorage
       Object.keys(cloud).forEach(function(k) {
         try { localStorage.setItem(k, typeof cloud[k] === 'string' ? cloud[k] : JSON.stringify(cloud[k])); } catch(e) {}
       });
@@ -8159,19 +8210,16 @@ async function afterAuthLogin(preferredPortfolio) {
   } catch(e) {
     console.warn('Cloud load failed, using localStorage:', e);
   }
-  // Fallback: existing local portfolios
   if (!portfolioName) {
     var list = getPortfolios();
     portfolioName = list.length > 0 ? list[0] : 'Mon Portfolio';
     if (!list.includes(portfolioName)) { list.push(portfolioName); savePortfolios(list); }
   }
-  // Show account section in dropdown menu
   var menuSec = document.getElementById('menuAccountSection');
   var menuEmail = document.getElementById('menuAccountEmail');
   if(menuSec) menuSec.style.display = 'block';
   if(menuEmail && _sbUser) menuEmail.textContent = '✉ ' + (_sbUser.email || '');
-  var screen = document.getElementById('loginScreen');
-  if(screen) { screen.style.opacity = '0'; screen.style.transition = 'opacity .3s'; setTimeout(function(){ screen.style.display='none'; }, 300); }
+  _hideAuth();
   loadPortfolio(portfolioName);
   updateAll();
   fetchEurUsdRate().then(function(){ fetchAllPrices(); });
