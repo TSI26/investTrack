@@ -7,10 +7,12 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Y26 Portfolio">
   <meta name="theme-color" content="#0d1117">
-  <link rel="manifest" href="manifest.json">
+  <link rel="manifest" href="manifest.webmanifest">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Portfolio Tracker</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='11' fill='%232563eb'/%3E%3Cpolyline points='5,38 13,29 21,32 30,20' stroke='rgba(255,255,255,0.85)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Ccircle cx='36' cy='14' r='8' stroke='rgba(255,255,255,0.3)' stroke-width='1.5' fill='none'/%3E%3Ccircle cx='36' cy='14' r='5' stroke='rgba(255,255,255,0.6)' stroke-width='1.5' fill='none'/%3E%3Ccircle cx='36' cy='14' r='2.2' fill='white'/%3E%3Cline x1='30' y1='20' x2='32.5' y2='17' stroke='rgba(255,255,255,0.85)' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
@@ -253,7 +255,7 @@ td.td-center{text-align:center!important}
 tbody tr{animation:fi .18s ease}@keyframes fi{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
 /* ─── LOGIN SCREEN ──────────────────────────────────────────────────────────── */
 #loginScreen{position:fixed;inset:0;background:#05070a;z-index:99999;display:flex;align-items:center;justify-content:center;}
-.login-box{width:380px;padding:48px 44px;background:var(--bg2);border:1px solid var(--b1);border-radius:18px;box-shadow:0 24px 80px rgba(0,0,0,.7);text-align:center;}
+.login-box{width:380px;max-width:calc(100vw - 32px);padding:40px 36px;background:var(--bg2);border:1px solid var(--b1);border-radius:18px;box-shadow:0 24px 80px rgba(0,0,0,.7);text-align:center;}
 .login-logo{width:56px;height:56px;border-radius:14px;background:rgba(59,130,246,.12);border:1.5px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:var(--gold2);margin:0 auto 20px;font-family:"Inter",sans-serif;}
 .login-title{font-size:22px;font-weight:700;color:var(--t1);margin-bottom:4px;font-family:"Inter",sans-serif;letter-spacing:-0.4px}
 .login-sub{font-size:12px;color:var(--t3);margin-bottom:32px;font-family:"Inter",sans-serif;}
@@ -412,6 +414,12 @@ tbody tr{animation:fi .18s ease}@keyframes fi{from{opacity:0;transform:translate
       <button onclick="deletePortfolio()" style="width:100%;padding:10px 16px;background:none;border:none;color:var(--red);font-family:'Inter',sans-serif;font-size:12px;cursor:pointer;text-align:left;display:flex;align-items:center;gap:8px" onmouseover="this.style.background='var(--bg4)'" onmouseout="this.style.background='none'">
         &#128465; Supprimer ce portefeuille
       </button>
+      <div id="menuAccountSection" style="border-top:1px solid var(--b1);margin:4px 0;display:none">
+        <div id="menuAccountEmail" style="padding:8px 16px 2px;font-size:11px;color:var(--t3);font-family:'Inter',sans-serif"></div>
+        <button onclick="authSignOut()" style="width:100%;padding:10px 16px;background:none;border:none;color:var(--t2);font-family:'Inter',sans-serif;font-size:12px;cursor:pointer;text-align:left;display:flex;align-items:center;gap:8px" onmouseover="this.style.background='var(--bg4)'" onmouseout="this.style.background='none'">
+          ⎋ Se déconnecter
+        </button>
+      </div>
     </div>
   </div>
   <!-- Logo InvestTrack centré -->
@@ -1377,6 +1385,13 @@ function saveCurrentPortfolio() {
   if(CASH_MANUAL!==null)localStorage.setItem(portfolioKey(CURRENT_PORTFOLIO,'cash_manual'),CASH_MANUAL);else localStorage.removeItem(portfolioKey(CURRENT_PORTFOLIO,'cash_manual'));
   if(CASH_USD_MANUAL!==null)localStorage.setItem(portfolioKey(CURRENT_PORTFOLIO,'cash_usd_manual'),CASH_USD_MANUAL);else localStorage.removeItem(portfolioKey(CURRENT_PORTFOLIO,'cash_usd_manual'));
   if(CASH_EUR_MANUAL!==null)localStorage.setItem(portfolioKey(CURRENT_PORTFOLIO,'cash_eur_manual'),CASH_EUR_MANUAL);else localStorage.removeItem(portfolioKey(CURRENT_PORTFOLIO,'cash_eur_manual'));
+  // Cloud sync (debounced — don't await, fire and forget)
+  if(_sbUser) {
+    clearTimeout(window._sbSaveTimer);
+    window._sbSaveTimer = setTimeout(function() {
+      sbSaveData(CURRENT_PORTFOLIO);
+    }, 1500);
+  }
 }
 
 // Login UI helpers
@@ -2953,10 +2968,12 @@ function tsToDate(ts) {
 }
 
 var _cs = null; // chart state
+var _loadChartSeq = 0;
 
 async function loadChart(tk, range) {
   var wrap = document.getElementById('dChartWrap');
   if (!wrap) return;
+  var mySeq = ++_loadChartSeq;
   if (DCHART) { try{DCHART.remove();}catch(e){} DCHART=null; }
   _cs = null;
   applyChartPrefsUI();
@@ -2977,19 +2994,16 @@ async function loadChart(tk, range) {
   // ── Fetch (seulement si pas en cache) ────────────────────────────────────
   var tf = CHART_TF || '1day';
   if(!priceData.length){
-  var yInterval = tf==='1week'?'1wk': tf==='1month'?'1mo':'1d';
+  // Toujours fetcher en 1d et agréger côté client (le proxy ignore l'interval)
   var baseQ;
   if(range==='ALL'){
-    baseQ='?interval='+yInterval+'&range=max&includePrePost=false';
-  } else if(tf==='1week'||tf==='1month'){
-    var pmapWM={'1M':'3mo','3M':'6mo','6M':'1y','1Y':'2y'};
-    baseQ='?interval='+yInterval+'&range='+(pmapWM[range]||'1y')+'&includePrePost=false';
+    baseQ='?interval=1d&range=max&includePrePost=false';
   } else if(tf==='3day'){
     var pmap3={'1M':'3mo','3M':'6mo','6M':'1y','1Y':'2y','ALL':'max'};
     baseQ='?interval=1d&range='+(pmap3[range]||'6mo')+'&includePrePost=false';
   } else {
-    var pmap={'1M':'1mo','3M':'3mo','6M':'6mo','1Y':'1y','ALL':'max'};
-    baseQ='?interval=1d&range='+(pmap[range]||'1mo')+'&includePrePost=false';
+    var pmapD={'1M':'1mo','3M':'3mo','6M':'6mo','1Y':'2y','ALL':'max'};
+    baseQ='?interval=1d&range='+(pmapD[range]||'1y')+'&includePrePost=false';
   }
   var yUrl='https://query1.finance.yahoo.com/v8/finance/chart/'+tk+baseQ;
   var yUrl2='https://query2.finance.yahoo.com/v8/finance/chart/'+tk+baseQ;
@@ -3069,6 +3083,26 @@ async function loadChart(tk, range) {
   } catch(e){}
   } // fin if(!priceData.length)
 
+  // ── Agrégation weekly / monthly côté client ──────────────────────────────
+  function aggregateBars(bars, groupFn) {
+    var groups = {}, order = [];
+    bars.forEach(function(b) {
+      var key = groupFn(b.time);
+      if (!groups[key]) { groups[key] = {time:b.time,open:b.open,high:b.high,low:b.low,close:b.close}; order.push(key); }
+      else { var g=groups[key]; g.high=Math.max(g.high,b.high); g.low=Math.min(g.low,b.low); g.close=b.close; }
+    });
+    return order.map(function(k){return groups[k];});
+  }
+  if (priceData.length && tf === '1week') {
+    priceData = aggregateBars(priceData, function(d) {
+      var dt = new Date(d); var day = dt.getUTCDay();
+      var mon = new Date(dt); mon.setUTCDate(dt.getUTCDate() - (day===0?6:day-1));
+      return mon.toISOString().slice(0,10);
+    });
+  } else if (priceData.length && tf === '1month') {
+    priceData = aggregateBars(priceData, function(d) { return d.slice(0,7)+'-01'; });
+  }
+
   if(priceData.length===0){
     wrap.innerHTML='<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--t3)"><div style="font-size:28px">📡</div><div>Cours indisponible</div></div>';
     return;
@@ -3076,6 +3110,7 @@ async function loadChart(tk, range) {
 
   // Sauvegarder en cache pour affichage instantané la prochaine fois
   CHART_CACHE[cKey] = {data:priceData, price:lastPrice, ts:Date.now()};
+  if(mySeq !== _loadChartSeq) return;
   wrap.innerHTML='';
 
   // ── Transactions ───────────────────────────────────────────────────────────
@@ -3415,6 +3450,7 @@ async function loadChart(tk, range) {
     requestAnimationFrame(drawBubbles);
   }).observe(wrap);
 
+  if(mySeq !== _loadChartSeq) return;
   if(lastPrice) updateDetailKpis(tk,lastPrice);
 }
 
@@ -3447,7 +3483,7 @@ async function updateDetailKpis(tk,price){
     var pctColor=p.unrealizedPct>=0?'var(--green)':'var(--red)';
     var spans5=cards[5].querySelectorAll('.dk-gain-pct span:not([style*="|"])');
     if(spans5[0]){spans5[0].style.color=gc;spans5[0].textContent=(p.unrealizedPL>=0?'+':'−')+' '+unrealAbs;}
-    if(spans5[1]){spans5[1].style.color=pctColor5||gc;}
+    if(spans5[1]){spans5[1].style.color=pctColor||gc;}
     var pctEl=cards[5].querySelector('.dk-gain-pct');
     if(pctEl){ pctEl.style.color=pctColor; pctEl.textContent=(p.unrealizedPct>=0?'+':'−')+Math.abs(p.unrealizedPct).toFixed(2)+'%'; }
     // card border/background
@@ -4079,18 +4115,26 @@ document.addEventListener('DOMContentLoaded', function() {
   // Fetch EUR/USD rate
   fetchEurUsdRate();
   initLoginScreen();
-  var last = localStorage.getItem('y26_last_portfolio');
-  var list = getPortfolios();
-  if(last && list.includes(last)) {
-    var screen = document.getElementById('loginScreen');
-    if(screen) screen.style.display = 'none';
-    loadPortfolio(last);
-    updateAll();
-    fetchEurUsdRate().then(function(){ fetchAllPrices(); });
-    // Auto-refresh prices every 5 minutes
-    // Auto-refresh supprimé — bouton Màj uniquement
-  }
-  // else: login screen stays visible, user must login
+
+  // Try Supabase session first, fallback to localStorage
+  checkExistingSession().then(function(hasSession) {
+    if (hasSession) {
+      // Logged in via Supabase — load from cloud
+      afterAuthLogin();
+    } else {
+      // No Supabase session — check localStorage for local portfolios
+      var last = localStorage.getItem('y26_last_portfolio');
+      var list = getPortfolios();
+      if(last && list.includes(last)) {
+        var screen = document.getElementById('loginScreen');
+        if(screen) screen.style.display = 'none';
+        loadPortfolio(last);
+        updateAll();
+        fetchEurUsdRate().then(function(){ fetchAllPrices(); });
+      }
+      // else: login screen stays visible
+    }
+  });
 });
 
 // ─── MODALE CLÔTURER ─────────────────────────────────────────────────────────
@@ -7874,21 +7918,69 @@ function resetCashCcy(ccy){ if(ccy==='usd')CASH_USD_MANUAL=null; else CASH_EUR_M
     <div class="login-title">Portfolio Tracker</div>
     <div class="login-sub">Gestion de portefeuille personnel</div>
 
-    <!-- Existing portfolios -->
-    <div id="loginExisting" style="display:none">
-      <div class="login-label">PORTEFEUILLE EXISTANT</div>
-      <select id="loginSelect" class="login-select">
-        <option value="">— Sélectionner —</option>
-      </select>
-      <button class="login-btn" onclick="loginWithExisting()">Accéder</button>
-      <div class="login-or">ou créer un nouveau</div>
+    <!-- Tab switcher: Auth / Local -->
+    <div id="loginTabs" style="display:flex;gap:0;margin-bottom:20px;border:1px solid var(--b2);border-radius:8px;overflow:hidden">
+      <button id="tabAuthBtn" onclick="showLoginTab('auth')" style="flex:1;padding:9px;background:var(--gold);color:#fff;border:none;font-size:12.5px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;transition:all .2s">Compte</button>
+      <button id="tabLocalBtn" onclick="showLoginTab('local')" style="flex:1;padding:9px;background:transparent;color:var(--t2);border:none;font-size:12.5px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;transition:all .2s">Local</button>
     </div>
 
-    <!-- New portfolio -->
-    <div id="loginNew">
-      <div class="login-label">NOM DU PORTEFEUILLE</div>
-      <input id="loginName" class="login-input" type="text" placeholder="ex: Portfolio Tracker" maxlength="32" onkeydown="if(event.key==='Enter')loginCreate()">
-      <button class="login-btn" onclick="loginCreate()">Créer &amp; Accéder</button>
+    <!-- Auth panel -->
+    <div id="loginPanelAuth">
+      <!-- Sign In -->
+      <div id="panelSignIn">
+        <div class="login-label">EMAIL</div>
+        <input id="authEmail" class="login-input" type="email" placeholder="votre@email.com" autocomplete="email" onkeydown="if(event.key==='Enter')authSignIn()">
+        <div class="login-label" style="margin-top:12px">MOT DE PASSE</div>
+        <input id="authPassword" class="login-input" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')authSignIn()">
+        <button class="login-btn" onclick="authSignIn()" id="btnSignIn">Connexion</button>
+        <div class="login-or">pas encore de compte ?</div>
+        <button onclick="showAuthPanel('signup')" style="width:100%;padding:9px;background:transparent;color:var(--gold2);border:1px solid var(--b2);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">Créer un compte</button>
+        <div style="margin-top:10px;text-align:center">
+          <button onclick="showAuthPanel('reset')" style="background:none;border:none;color:var(--t3);font-size:12px;cursor:pointer;font-family:Inter,sans-serif">Mot de passe oublié ?</button>
+        </div>
+      </div>
+      <!-- Sign Up -->
+      <div id="panelSignUp" style="display:none">
+        <div class="login-label">EMAIL</div>
+        <input id="authEmailReg" class="login-input" type="email" placeholder="votre@email.com" autocomplete="email">
+        <div class="login-label" style="margin-top:12px">MOT DE PASSE</div>
+        <input id="authPasswordReg" class="login-input" type="password" placeholder="6 caractères min" autocomplete="new-password">
+        <div class="login-label" style="margin-top:12px">NOM DU PORTEFEUILLE</div>
+        <input id="authPortName" class="login-input" type="text" placeholder="ex: Mon Portfolio" maxlength="32" onkeydown="if(event.key==='Enter')authSignUp()">
+        <button class="login-btn" onclick="authSignUp()" id="btnSignUp">Créer le compte</button>
+        <div style="margin-top:10px;text-align:center">
+          <button onclick="showAuthPanel('signin')" style="background:none;border:none;color:var(--t3);font-size:12px;cursor:pointer;font-family:Inter,sans-serif">← Retour à la connexion</button>
+        </div>
+      </div>
+      <!-- Reset password -->
+      <div id="panelReset" style="display:none">
+        <div style="font-size:13px;color:var(--t2);margin-bottom:14px;text-align:center;line-height:1.5">Entre ton email pour recevoir un lien de réinitialisation.</div>
+        <div class="login-label">EMAIL</div>
+        <input id="authEmailReset" class="login-input" type="email" placeholder="votre@email.com">
+        <button class="login-btn" onclick="authResetPassword()">Envoyer le lien</button>
+        <div style="margin-top:10px;text-align:center">
+          <button onclick="showAuthPanel('signin')" style="background:none;border:none;color:var(--t3);font-size:12px;cursor:pointer;font-family:Inter,sans-serif">← Retour</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Local panel -->
+    <div id="loginPanelLocal" style="display:none">
+      <!-- Existing portfolios -->
+      <div id="loginExisting" style="display:none">
+        <div class="login-label">PORTEFEUILLE EXISTANT</div>
+        <select id="loginSelect" class="login-select">
+          <option value="">— Sélectionner —</option>
+        </select>
+        <button class="login-btn" onclick="loginWithExisting()">Accéder</button>
+        <div class="login-or">ou créer un nouveau</div>
+      </div>
+      <!-- New portfolio -->
+      <div id="loginNew">
+        <div class="login-label">NOM DU PORTEFEUILLE</div>
+        <input id="loginName" class="login-input" type="text" placeholder="ex: Portfolio Tracker" maxlength="32" onkeydown="if(event.key==='Enter')loginCreate()">
+        <button class="login-btn" onclick="loginCreate()">Créer &amp; Accéder</button>
+      </div>
     </div>
 
     <div class="login-err" id="loginErr"></div>
@@ -7904,6 +7996,243 @@ function resetCashCcy(ccy){ if(ccy==='usd')CASH_USD_MANUAL=null; else CASH_EUR_M
         .catch(function(err) { console.log('SW erreur:', err); });
     });
   }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SUPABASE AUTH + CLOUD SYNC
+// ═══════════════════════════════════════════════════════════════════════════
+var _sb = null; // Supabase client
+var _sbUser = null; // Current user
+
+function getSupabase() {
+  if (_sb) return _sb;
+  if (typeof supabase !== 'undefined' && typeof SUPABASE_URL !== 'undefined') {
+    _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+  return _sb;
+}
+
+// ── Auth Tab UI ──────────────────────────────────────────────────────────────
+function showLoginTab(tab) {
+  var panelAuth = document.getElementById('loginPanelAuth');
+  var panelLocal = document.getElementById('loginPanelLocal');
+  var btnAuth = document.getElementById('tabAuthBtn');
+  var btnLocal = document.getElementById('tabLocalBtn');
+  if (tab === 'auth') {
+    if(panelAuth) panelAuth.style.display = 'block';
+    if(panelLocal) panelLocal.style.display = 'none';
+    if(btnAuth) { btnAuth.style.background = 'var(--gold)'; btnAuth.style.color = '#fff'; }
+    if(btnLocal) { btnLocal.style.background = 'transparent'; btnLocal.style.color = 'var(--t2)'; }
+  } else {
+    if(panelAuth) panelAuth.style.display = 'none';
+    if(panelLocal) panelLocal.style.display = 'block';
+    if(btnAuth) { btnAuth.style.background = 'transparent'; btnAuth.style.color = 'var(--t2)'; }
+    if(btnLocal) { btnLocal.style.background = 'var(--gold)'; btnLocal.style.color = '#fff'; }
+    initLoginScreen();
+  }
+  document.getElementById('loginErr').textContent = '';
+}
+
+function showAuthPanel(panel) {
+  var panels = ['panelSignIn','panelSignUp','panelReset'];
+  panels.forEach(function(id) {
+    var el = document.getElementById(id);
+    if(el) el.style.display = (id === 'panel' + panel.charAt(0).toUpperCase() + panel.slice(1)) ? 'block' : 'none';
+  });
+  document.getElementById('loginErr').textContent = '';
+}
+
+// ── Sign In ──────────────────────────────────────────────────────────────────
+async function authSignIn() {
+  var sb = getSupabase();
+  if (!sb) { document.getElementById('loginErr').textContent = 'Supabase non disponible.'; return; }
+  var email = document.getElementById('authEmail').value.trim();
+  var password = document.getElementById('authPassword').value;
+  if (!email || !password) { document.getElementById('loginErr').textContent = 'Remplis tous les champs.'; return; }
+  var btn = document.getElementById('btnSignIn');
+  if(btn) { btn.textContent = 'Connexion…'; btn.disabled = true; }
+  try {
+    var result = await sb.auth.signInWithPassword({ email: email, password: password });
+    if (result.error) throw result.error;
+    _sbUser = result.data.user;
+    await afterAuthLogin();
+  } catch(e) {
+    document.getElementById('loginErr').textContent = 'Erreur : ' + (e.message || 'Connexion impossible.');
+    if(btn) { btn.textContent = 'Connexion'; btn.disabled = false; }
+  }
+}
+
+// ── Sign Up ──────────────────────────────────────────────────────────────────
+async function authSignUp() {
+  var sb = getSupabase();
+  if (!sb) { document.getElementById('loginErr').textContent = 'Supabase non disponible.'; return; }
+  var email = document.getElementById('authEmailReg').value.trim();
+  var password = document.getElementById('authPasswordReg').value;
+  var portName = document.getElementById('authPortName').value.trim();
+  if (!email || !password || !portName) { document.getElementById('loginErr').textContent = 'Remplis tous les champs.'; return; }
+  if (password.length < 6) { document.getElementById('loginErr').textContent = 'Mot de passe trop court (6 car. min).'; return; }
+  if (portName.length < 2) { document.getElementById('loginErr').textContent = 'Nom du portefeuille trop court.'; return; }
+  var btn = document.getElementById('btnSignUp');
+  if(btn) { btn.textContent = 'Création…'; btn.disabled = true; }
+  try {
+    var result = await sb.auth.signUp({ email: email, password: password });
+    if (result.error) throw result.error;
+    _sbUser = result.data.user;
+    // Check if email confirmation required
+    if (!_sbUser || !_sbUser.id) {
+      document.getElementById('loginErr').style.color = 'var(--green)';
+      document.getElementById('loginErr').textContent = '✓ Vérifie ton email pour confirmer ton compte, puis connecte-toi.';
+      if(btn) { btn.textContent = 'Créer le compte'; btn.disabled = false; }
+      return;
+    }
+    // Create initial portfolio in localStorage then sync to cloud
+    var list = getPortfolios();
+    if(!list.includes(portName)) { list.push(portName); savePortfolios(list); }
+    localStorage.setItem('y26_last_portfolio', portName);
+    var initialData = buildPortfolioData(portName);
+    await sbSaveData(portName, initialData);
+    await afterAuthLogin(portName);
+  } catch(e) {
+    document.getElementById('loginErr').textContent = 'Erreur : ' + (e.message || 'Inscription impossible.');
+    if(btn) { btn.textContent = 'Créer le compte'; btn.disabled = false; }
+  }
+}
+
+// ── Reset password ────────────────────────────────────────────────────────────
+async function authResetPassword() {
+  var sb = getSupabase();
+  if (!sb) return;
+  var email = document.getElementById('authEmailReset').value.trim();
+  if (!email) { document.getElementById('loginErr').textContent = 'Entre ton email.'; return; }
+  try {
+    var result = await sb.auth.resetPasswordForEmail(email);
+    if (result.error) throw result.error;
+    document.getElementById('loginErr').style.color = 'var(--green)';
+    document.getElementById('loginErr').textContent = '✓ Email envoyé ! Vérifie ta boîte mail.';
+  } catch(e) {
+    document.getElementById('loginErr').textContent = 'Erreur : ' + (e.message || 'Impossible.');
+  }
+}
+
+// ── Sign Out ──────────────────────────────────────────────────────────────────
+async function authSignOut() {
+  var sb = getSupabase();
+  if (sb) { await sb.auth.signOut(); }
+  _sbUser = null;
+  CURRENT_PORTFOLIO = null;
+  TX = []; PX = {}; CASH_MOVEMENTS = [];
+  var d = document.getElementById('userMenuDropdown');
+  if(d) d.style.display = 'none';
+  var screen = document.getElementById('loginScreen');
+  if(screen) { screen.style.display = 'flex'; screen.style.opacity = '1'; }
+  showLoginTab('auth');
+  showAuthPanel('signin');
+  // Reset login error color
+  var err = document.getElementById('loginErr');
+  if(err) { err.style.color = ''; err.textContent = ''; }
+}
+
+// ── After login (auth or auto-restore) ───────────────────────────────────────
+async function afterAuthLogin(preferredPortfolio) {
+  var sb = getSupabase();
+  if (!_sbUser) return;
+  // Load portfolio list from Supabase
+  var portfolioName = preferredPortfolio || null;
+  try {
+    var res = await sb.from('portfolios').select('data').eq('user_id', _sbUser.id).single();
+    if (res.data && res.data.data) {
+      var cloud = res.data.data;
+      // Migrate cloud data to localStorage
+      Object.keys(cloud).forEach(function(k) {
+        try { localStorage.setItem(k, typeof cloud[k] === 'string' ? cloud[k] : JSON.stringify(cloud[k])); } catch(e) {}
+      });
+      if (!portfolioName) {
+        portfolioName = cloud['y26_last_portfolio'] || null;
+        var portList = JSON.parse(cloud['y26_portfolios'] || '[]');
+        if (!portfolioName && portList.length > 0) portfolioName = portList[0];
+      }
+    }
+  } catch(e) {
+    console.warn('Cloud load failed, using localStorage:', e);
+  }
+  // Fallback: existing local portfolios
+  if (!portfolioName) {
+    var list = getPortfolios();
+    portfolioName = list.length > 0 ? list[0] : 'Mon Portfolio';
+    if (!list.includes(portfolioName)) { list.push(portfolioName); savePortfolios(list); }
+  }
+  // Show account section in dropdown menu
+  var menuSec = document.getElementById('menuAccountSection');
+  var menuEmail = document.getElementById('menuAccountEmail');
+  if(menuSec) menuSec.style.display = 'block';
+  if(menuEmail && _sbUser) menuEmail.textContent = '✉ ' + (_sbUser.email || '');
+  var screen = document.getElementById('loginScreen');
+  if(screen) { screen.style.opacity = '0'; screen.style.transition = 'opacity .3s'; setTimeout(function(){ screen.style.display='none'; }, 300); }
+  loadPortfolio(portfolioName);
+  updateAll();
+  fetchEurUsdRate().then(function(){ fetchAllPrices(); });
+}
+
+// ── Build portfolio snapshot for cloud ──────────────────────────────────────
+function buildPortfolioData(portName) {
+  var data = {};
+  var list = getPortfolios();
+  if (!list.includes(portName)) { list.push(portName); }
+  data['y26_portfolios'] = JSON.stringify(list);
+  data['y26_last_portfolio'] = portName;
+  var suffixes = ['tx','px','prefs','cash','px_manual','avg_manual','tv_manual','upl_manual','cash_manual','cash_usd_manual','cash_eur_manual','donut_colors'];
+  suffixes.forEach(function(s) {
+    var k = portfolioKey(portName, s);
+    var v = localStorage.getItem(k);
+    if (v !== null) data[k] = v;
+  });
+  return data;
+}
+
+// ── Save to Supabase ─────────────────────────────────────────────────────────
+async function sbSaveData(portName, data) {
+  var sb = getSupabase();
+  if (!sb || !_sbUser) return;
+  try {
+    var snapshot = data || buildPortfolioData(portName || CURRENT_PORTFOLIO);
+    var ts = new Date().toISOString();
+    // Check if record exists
+    var check = await sb.from('portfolios').select('id').eq('user_id', _sbUser.id).single();
+    if (check.data && check.data.id) {
+      // Update existing record
+      var res = await sb.from('portfolios').update({ data: snapshot, updated_at: ts }).eq('user_id', _sbUser.id);
+      if (res.error) console.warn('sbSave update error:', res.error);
+    } else {
+      // Insert new record
+      var res2 = await sb.from('portfolios').insert({ user_id: _sbUser.id, data: snapshot, updated_at: ts });
+      if (res2.error) console.warn('sbSave insert error:', res2.error);
+    }
+  } catch(e) {
+    console.warn('sbSave exception:', e);
+  }
+}
+
+// ── Patch saveCurrentPortfolio to also sync cloud ────────────────────────────
+var _origSaveCurrentPortfolio = null;
+function _patchSavePortfolio() {
+  // Called once after DOM ready — wraps saveCurrentPortfolio
+  _origSaveCurrentPortfolio = window._saveCurrentPortfolioBase;
+}
+
+// Check for existing session on load
+async function checkExistingSession() {
+  var sb = getSupabase();
+  if (!sb) return false;
+  try {
+    var result = await sb.auth.getSession();
+    if (result.data && result.data.session) {
+      _sbUser = result.data.session.user;
+      return true;
+    }
+  } catch(e) {
+    console.warn('getSession error:', e);
+  }
+  return false;
+}
 
 
 // ═══════════════════════════════════════════════════════
