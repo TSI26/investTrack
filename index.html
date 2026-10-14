@@ -303,13 +303,6 @@ tbody tr{animation:fi .18s ease}@keyframes fi{from{opacity:0;transform:translate
 .auth-msg:empty{display:none}
 .auth-note{font-size:12.5px;color:var(--muted);margin:0;padding:10px 12px;border-radius:11px;background:var(--surface);border:1px solid var(--line)}
 .a-back{align-self:flex-start}
-/* Login select (local portfolios) */
-.login-select{width:100%;background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:12px 14px;font-size:14px;color:var(--fg);font-family:"Inter",sans-serif;outline:none;box-sizing:border-box;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
-.login-select:focus{border-color:var(--accent)}
-.local-card h3{margin:0 0 12px;font-size:14px;font-weight:700;color:var(--fg)}
-.local-card .primary{margin-top:4px}
-.local-or{color:var(--muted);font-size:11px;font-family:"Inter",sans-serif;margin:14px 0;display:flex;align-items:center;gap:10px}
-.local-or::before,.local-or::after{content:'';flex:1;height:1px;background:var(--line)}
 @media(max-width:900px){
   .auth{grid-template-columns:1fr}
   .auth-show{display:none}
@@ -465,6 +458,9 @@ tbody tr{animation:fi .18s ease}@keyframes fi{from{opacity:0;transform:translate
       </button>
       <div id="menuAccountSection" style="border-top:1px solid var(--b1);margin:4px 0;display:none">
         <div id="menuAccountEmail" style="padding:8px 16px 2px;font-size:11px;color:var(--t3);font-family:'Inter',sans-serif"></div>
+        <button onclick="openAccountSettings()" style="width:100%;padding:10px 16px;background:none;border:none;color:var(--t2);font-family:'Inter',sans-serif;font-size:12px;cursor:pointer;text-align:left;display:flex;align-items:center;gap:8px" onmouseover="this.style.background='var(--bg4)'" onmouseout="this.style.background='none'">
+          ⚙️ Paramètres du compte
+        </button>
         <button onclick="authSignOut()" style="width:100%;padding:10px 16px;background:none;border:none;color:var(--t2);font-family:'Inter',sans-serif;font-size:12px;cursor:pointer;text-align:left;display:flex;align-items:center;gap:8px" onmouseover="this.style.background='var(--bg4)'" onmouseout="this.style.background='none'">
           ⎋ Se déconnecter
         </button>
@@ -1443,24 +1439,6 @@ function saveCurrentPortfolio() {
   }
 }
 
-function loginEnter(name) {
-  // Auto-migrate old data (y26v5_tx / y26v5_px) into this portfolio if it's empty
-  var newTxKey = portfolioKey(name,'tx');
-  var newPxKey = portfolioKey(name,'px');
-  var hasExisting = localStorage.getItem(newTxKey);
-  if(!hasExisting) {
-    var oldTx = localStorage.getItem('y26v5_tx');
-    var oldPx = localStorage.getItem('y26v5_px');
-    if(oldTx && oldTx !== '[]') {
-      localStorage.setItem(newTxKey, oldTx);
-      if(oldPx && oldPx !== '{}') localStorage.setItem(newPxKey, oldPx);
-    }
-  }
-  _hideAuth();
-  loadPortfolio(name);
-  updateAll();
-  fetchEurUsdRate().then(function(){ fetchAllPrices(); });
-}
 function toggleUserMenu() {
   var d = document.getElementById('userMenuDropdown');
   var chevron = document.getElementById('logoChevron');
@@ -1542,7 +1520,7 @@ function switchPortfolio() {
   document.getElementById('userMenuDropdown').style.display = 'none';
   saveCurrentPortfolio();
   TX = []; PX = {}; CURRENT_PORTFOLIO = null;
-  _authMode = _sbUser ? 'login' : 'local';
+  _authMode = 'login';
   showAuth();
 }
 function deletePortfolio() {
@@ -1557,7 +1535,7 @@ function deletePortfolio() {
   localStorage.removeItem(portfolioKey(CURRENT_PORTFOLIO,'prefs'));
   localStorage.removeItem('y26_last_portfolio');
   TX = []; PX = {}; CURRENT_PORTFOLIO = null;
-  _authMode = _sbUser ? 'login' : 'local';
+  _authMode = 'login';
   showAuth();
 }
 // Close menu on outside click
@@ -4117,22 +4095,13 @@ document.addEventListener('DOMContentLoaded', function() {
   // Fetch EUR/USD rate
   fetchEurUsdRate();
 
-  // Try Supabase session first, fallback to localStorage
+  // Vérifie si une session Supabase existe, sinon affiche l'auth
   checkExistingSession().then(function(hasSession) {
     if (hasSession) {
       afterAuthLogin();
     } else {
-      var last = localStorage.getItem('y26_last_portfolio');
-      var list = getPortfolios();
-      if(last && list.includes(last)) {
-        loadPortfolio(last);
-        updateAll();
-        fetchEurUsdRate().then(function(){ fetchAllPrices(); });
-      } else {
-        // Afficher l'écran d'auth
-        _authMode = 'login';
-        showAuth();
-      }
+      _authMode = 'login';
+      showAuth();
     }
   });
 });
@@ -7911,12 +7880,74 @@ function resetCashCcy(ccy){ if(ccy==='usd')CASH_USD_MANUAL=null; else CASH_EUR_M
 
 </script>
 
+<!-- ─── ACCOUNT SETTINGS MODAL ───────────────────────────────────────────── -->
+<div id="accountSettingsOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);z-index:99998;align-items:center;justify-content:center">
+  <div style="background:var(--bg2);border:1px solid var(--b2);border-radius:20px;padding:32px;width:420px;max-width:calc(100vw - 32px);max-height:calc(100vh - 48px);overflow-y:auto;box-shadow:0 32px 80px rgba(0,0,0,.7);display:flex;flex-direction:column;gap:24px">
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:18px;font-weight:800;color:var(--t1);font-family:'Inter',sans-serif">Paramètres du compte</div>
+        <div id="acSettingsEmail" style="font-size:12px;color:var(--t3);font-family:'Inter',sans-serif;margin-top:2px"></div>
+      </div>
+      <button onclick="closeAccountSettings()" style="width:34px;height:34px;border-radius:50%;background:var(--bg3);border:1px solid var(--b1);color:var(--t2);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">×</button>
+    </div>
+
+    <!-- Section: Changer l'email -->
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div style="font-size:13px;font-weight:700;color:var(--t1);font-family:'Inter',sans-serif;padding-bottom:8px;border-bottom:1px solid var(--b1)">✉ Changer l'adresse e-mail</div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <label style="font-size:11px;font-weight:600;color:var(--t3);font-family:'Inter',sans-serif;letter-spacing:.05em">NOUVELLE ADRESSE E-MAIL</label>
+        <input id="acNewEmail" type="email" placeholder="nouvelle@adresse.com" autocomplete="email"
+          style="width:100%;background:var(--bg3);border:1.5px solid var(--b2);border-radius:10px;padding:11px 14px;font-size:14px;color:var(--t1);font-family:'Inter',sans-serif;outline:none;box-sizing:border-box;transition:border .15s"
+          onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--b2)'">
+      </div>
+      <button onclick="updateEmail()" id="btnUpdateEmail"
+        style="padding:11px 20px;background:var(--gold);color:#000;font-weight:700;font-size:13px;font-family:'Inter',sans-serif;border:none;border-radius:10px;cursor:pointer;transition:opacity .15s;align-self:flex-start"
+        onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+        Envoyer le lien de confirmation
+      </button>
+      <div id="acEmailMsg" style="font-size:12.5px;min-height:16px;font-family:'Inter',sans-serif"></div>
+    </div>
+
+    <!-- Section: Changer le mot de passe -->
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div style="font-size:13px;font-weight:700;color:var(--t1);font-family:'Inter',sans-serif;padding-bottom:8px;border-bottom:1px solid var(--b1)">🔑 Changer le mot de passe</div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <label style="font-size:11px;font-weight:600;color:var(--t3);font-family:'Inter',sans-serif;letter-spacing:.05em">NOUVEAU MOT DE PASSE</label>
+        <div style="position:relative">
+          <input id="acNewPassword" type="password" placeholder="6 caractères minimum" autocomplete="new-password"
+            style="width:100%;background:var(--bg3);border:1.5px solid var(--b2);border-radius:10px;padding:11px 48px 11px 14px;font-size:14px;color:var(--t1);font-family:'Inter',sans-serif;outline:none;box-sizing:border-box;transition:border .15s"
+            onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--b2)'">
+          <button type="button" onclick="toggleAcPw('acNewPassword','eyeAcNew')" id="eyeAcNew"
+            style="position:absolute;right:6px;top:50%;transform:translateY(-50%);width:36px;height:36px;background:transparent;border:none;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--t3);cursor:pointer">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <label style="font-size:11px;font-weight:600;color:var(--t3);font-family:'Inter',sans-serif;letter-spacing:.05em">CONFIRMER LE MOT DE PASSE</label>
+        <div style="position:relative">
+          <input id="acNewPassword2" type="password" placeholder="Répète le mot de passe" autocomplete="new-password"
+            style="width:100%;background:var(--bg3);border:1.5px solid var(--b2);border-radius:10px;padding:11px 48px 11px 14px;font-size:14px;color:var(--t1);font-family:'Inter',sans-serif;outline:none;box-sizing:border-box;transition:border .15s"
+            onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--b2)'">
+          <button type="button" onclick="toggleAcPw('acNewPassword2','eyeAcNew2')" id="eyeAcNew2"
+            style="position:absolute;right:6px;top:50%;transform:translateY(-50%);width:36px;height:36px;background:transparent;border:none;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--t3);cursor:pointer">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <button onclick="updatePassword()" id="btnUpdatePassword"
+        style="padding:11px 20px;background:var(--gold);color:#000;font-weight:700;font-size:13px;font-family:'Inter',sans-serif;border:none;border-radius:10px;cursor:pointer;transition:opacity .15s;align-self:flex-start"
+        onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+        Enregistrer le mot de passe
+      </button>
+      <div id="acPasswordMsg" style="font-size:12.5px;min-height:16px;font-family:'Inter',sans-serif"></div>
+    </div>
+  </div>
+</div>
+
 <!-- ─── AUTH ROOT (split-screen, injecté dynamiquement) ───────────────────── -->
 <div id="auth-root"></div>
-<!-- local portfolio select (utilisé dans le panel local) -->
-<select id="loginSelect" class="login-select" style="display:none">
-  <option value="">— Sélectionner —</option>
-</select>
 
 
 <script>
@@ -7933,7 +7964,7 @@ function resetCashCcy(ccy){ if(ccy==='usd')CASH_USD_MANUAL=null; else CASH_EUR_M
 // ═══════════════════════════════════════════════════════════════════════════
 var _sb = null;
 var _sbUser = null;
-var _authMode = 'login'; // 'login' | 'signup' | 'forgot' | 'local'
+var _authMode = 'login'; // 'login' | 'signup' | 'forgot'
 var _authEmail = '';
 
 function getSupabase() {
@@ -7973,8 +8004,7 @@ function showAuth(msg, kind) {
   var head = {
     login: ['Content de te revoir', 'Connecte-toi pour accéder à ton portefeuille.'],
     signup: ['Créer ton compte', 'Accède à ton portefeuille depuis n\'importe quel appareil.'],
-    forgot: ['Mot de passe oublié', 'Indique ton e-mail pour recevoir un lien de réinitialisation.'],
-    local: ['Accès local', 'Sans compte, tes données restent sur cet appareil.']
+    forgot: ['Mot de passe oublié', 'Indique ton e-mail pour recevoir un lien de réinitialisation.']
   }[m] || ['Portfolio Tracker',''];
 
   var body = '';
@@ -7993,20 +8023,6 @@ function showAuth(msg, kind) {
     body = '<label class="a-field">E-mail<input id="a-email" class="field" type="email" autocomplete="email" inputmode="email" required value="'+_esc(_authEmail)+'"></label>'
          + '<button class="primary" type="submit" id="a-submit">Envoyer le lien</button>'
          + '<button class="a-link a-back" type="button" data-amode="login">← Retour à la connexion</button>';
-  } else if (m === 'local') {
-    // Build existing portfolios list
-    var existingList = getPortfolios();
-    var selectHtml = '';
-    if (existingList.length > 0) {
-      selectHtml = '<label class="a-field">Portefeuille existant<select id="a-local-select" class="login-select"><option value="">— Sélectionner —</option>'
-        + existingList.map(function(n){ return '<option value="'+_esc(n)+'">'+_esc(n)+'</option>'; }).join('')
-        + '</select></label>'
-        + '<button class="primary" type="button" id="a-local-open" onclick="_localOpen()">Accéder</button>'
-        + '<div class="local-or">ou créer un nouveau</div>';
-    }
-    body = selectHtml
-         + '<label class="a-field">Nouveau portefeuille<input id="a-local-name" class="field" type="text" placeholder="ex: Mon Portfolio" maxlength="32"></label>'
-         + '<button class="primary" type="submit" id="a-submit">Créer &amp; Accéder</button>';
   }
 
   var tabsHtml = '';
@@ -8057,7 +8073,6 @@ function showAuth(msg, kind) {
     +     '<p class="sub">'+_esc(head[1])+'</p>'
     +     body
     +     '<div class="auth-msg '+(kind||'')+'" id="a-msg" role="status">'+_esc(msg||'')+'</div>'
-    +     (m !== 'local' ? '<div style="text-align:center;margin-top:4px"><button class="a-link" type="button" data-amode="local" style="font-size:12px;color:var(--muted)">Continuer sans compte (local)</button></div>' : '<div style="text-align:center;margin-top:4px"><button class="a-link" type="button" data-amode="login" style="font-size:12px;color:var(--muted)">← Connexion avec un compte</button></div>')
     +   '</form>'
     + '</div>'
     + '</div>';
@@ -8085,16 +8100,6 @@ function showAuth(msg, kind) {
   if (form) form.addEventListener('submit', _onAuthSubmit);
 }
 
-function _localOpen() {
-  var sel = document.getElementById('a-local-select');
-  var name = sel ? sel.value : '';
-  if (!name) { var m = document.getElementById('a-msg'); if(m){m.className='auth-msg err';m.textContent='Sélectionne un portefeuille.';} return; }
-  _hideAuth();
-  loadPortfolio(name);
-  updateAll();
-  fetchEurUsdRate().then(function(){ fetchAllPrices(); });
-}
-
 async function _onAuthSubmit(e) {
   e.preventDefault();
   var m = _authMode;
@@ -8102,21 +8107,6 @@ async function _onAuthSubmit(e) {
   var btn = document.getElementById('a-submit');
   var fail = function(t) { if(msgEl){msgEl.className='auth-msg err';msgEl.textContent=t;} if(btn){btn.disabled=false;} };
   var ok = function(t) { if(msgEl){msgEl.className='auth-msg ok';msgEl.textContent=t;} if(btn){btn.disabled=false;} };
-
-  if (m === 'local') {
-    // Create new local portfolio
-    var nameEl = document.getElementById('a-local-name');
-    var name = nameEl ? nameEl.value.trim() : '';
-    if (!name || name.length < 2) { fail('Donne un nom à ton portefeuille.'); return; }
-    var list = getPortfolios();
-    if (!list.includes(name)) { list.push(name); savePortfolios(list); }
-    localStorage.setItem('y26_last_portfolio', name);
-    _hideAuth();
-    loadPortfolio(name);
-    updateAll();
-    fetchEurUsdRate().then(function(){ fetchAllPrices(); });
-    return;
-  }
 
   var emailEl = document.getElementById('a-email');
   var passEl = document.getElementById('a-pass');
@@ -8188,6 +8178,83 @@ function _hideAuth() {
   var root = document.getElementById('auth-root');
   if (root) { root.style.opacity = '0'; root.style.transition = 'opacity .3s'; setTimeout(function(){ root.innerHTML = ''; root.style.opacity = ''; }, 300); }
 }
+
+// ── Account Settings ─────────────────────────────────────────────────────────
+function openAccountSettings() {
+  document.getElementById('userMenuDropdown').style.display = 'none';
+  var overlay = document.getElementById('accountSettingsOverlay');
+  var emailEl = document.getElementById('acSettingsEmail');
+  if (emailEl && _sbUser) emailEl.textContent = _sbUser.email || '';
+  // reset fields & messages
+  ['acNewEmail','acNewPassword','acNewPassword2'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+  ['acEmailMsg','acPasswordMsg'].forEach(function(id){ var el=document.getElementById(id); if(el){el.textContent='';el.style.color='';} });
+  overlay.style.display = 'flex';
+}
+
+function closeAccountSettings() {
+  document.getElementById('accountSettingsOverlay').style.display = 'none';
+}
+
+function toggleAcPw(inputId, btnId) {
+  var inp = document.getElementById(inputId);
+  var btn = document.getElementById(btnId);
+  if (!inp) return;
+  var show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  btn.innerHTML = show
+    ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18M10.6 5.1A10.9 10.9 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.1M6.1 6.1C3.6 7.8 2 12 2 12s3.6 7 10 7c1.8 0 3.4-.5 4.8-1.3M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>'
+    : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+}
+
+async function updateEmail() {
+  var sb = getSupabase();
+  var msg = document.getElementById('acEmailMsg');
+  var btn = document.getElementById('btnUpdateEmail');
+  var newEmail = (document.getElementById('acNewEmail').value || '').trim();
+  var setMsg = function(t, ok) { msg.textContent = t; msg.style.color = ok ? 'var(--green)' : 'var(--red)'; };
+  if (!newEmail || !/^\S+@\S+\.\S+$/.test(newEmail)) { setMsg('Adresse e-mail invalide.', false); return; }
+  if (_sbUser && newEmail === _sbUser.email) { setMsg('C\'est déjà ton adresse actuelle.', false); return; }
+  btn.disabled = true; btn.textContent = 'Envoi…';
+  try {
+    var res = await sb.auth.updateUser({ email: newEmail });
+    if (res.error) throw res.error;
+    setMsg('✓ Un lien de confirmation a été envoyé aux deux adresses. Clique dessus pour valider le changement.', true);
+    document.getElementById('acNewEmail').value = '';
+  } catch(e) {
+    setMsg(_authError(e), false);
+  }
+  btn.disabled = false; btn.textContent = 'Envoyer le lien de confirmation';
+}
+
+async function updatePassword() {
+  var sb = getSupabase();
+  var msg = document.getElementById('acPasswordMsg');
+  var btn = document.getElementById('btnUpdatePassword');
+  var newPw = document.getElementById('acNewPassword').value || '';
+  var newPw2 = document.getElementById('acNewPassword2').value || '';
+  var setMsg = function(t, ok) { msg.textContent = t; msg.style.color = ok ? 'var(--green)' : 'var(--red)'; };
+  if (newPw.length < 6) { setMsg('Le mot de passe doit faire au moins 6 caractères.', false); return; }
+  if (newPw !== newPw2) { setMsg('Les deux mots de passe ne sont pas identiques.', false); return; }
+  btn.disabled = true; btn.textContent = 'Enregistrement…';
+  try {
+    var res = await sb.auth.updateUser({ password: newPw });
+    if (res.error) throw res.error;
+    setMsg('✓ Mot de passe modifié avec succès.', true);
+    document.getElementById('acNewPassword').value = '';
+    document.getElementById('acNewPassword2').value = '';
+  } catch(e) {
+    setMsg(_authError(e), false);
+  }
+  btn.disabled = false; btn.textContent = 'Enregistrer le mot de passe';
+}
+
+// Fermer la modale en cliquant à l'extérieur
+document.addEventListener('click', function(e) {
+  var overlay = document.getElementById('accountSettingsOverlay');
+  if (overlay && overlay.style.display !== 'none' && e.target === overlay) {
+    closeAccountSettings();
+  }
+});
 
 // ── After login (auth or auto-restore) ───────────────────────────────────────
 async function afterAuthLogin(preferredPortfolio) {
