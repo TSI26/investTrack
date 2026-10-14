@@ -324,8 +324,13 @@ tbody tr{animation:fi .18s ease}@keyframes fi{from{opacity:0;transform:translate
 .psel-item:hover{border-color:var(--gold);background:var(--gdim)}
 .psel-item-icon{width:36px;height:36px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#fff;flex-shrink:0}
 .psel-item-name{flex:1;font-size:15px;font-weight:600;color:var(--t1)}
+.psel-item-exp{width:30px;height:30px;border:none;background:transparent;color:var(--t3);cursor:pointer;border-radius:7px;font-size:14px;display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s;flex-shrink:0}
+.psel-item-exp:hover{background:var(--gdim);color:var(--green)}
 .psel-item-del{width:30px;height:30px;border:none;background:transparent;color:var(--t3);cursor:pointer;border-radius:7px;font-size:16px;display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s;flex-shrink:0}
 .psel-item-del:hover{background:var(--rdim);color:var(--red)}
+.psel-transfer-row{display:flex;justify-content:center}
+.psel-transfer-btn{background:none;border:1px dashed var(--b2);color:var(--t3);font-size:13px;font-family:"Inter",sans-serif;padding:9px 18px;border-radius:9px;cursor:pointer;transition:all .15s;width:100%}
+.psel-transfer-btn:hover{border-color:var(--gold);color:var(--gold2);background:var(--gdim)}
 .psel-divider{border:none;border-top:1px solid var(--b1);margin:4px 0}
 .psel-new{display:flex;gap:10px;align-items:center}
 .psel-new input{flex:1;padding:12px 14px;background:var(--bg3);border:1.5px solid var(--b1);border-radius:10px;color:var(--t1);font-size:15px;font-family:"Inter",sans-serif;outline:none;transition:border-color .15s}
@@ -8285,10 +8290,12 @@ function showPortfolioSelect() {
       ? '<div class="psel-empty">Aucun portefeuille. Crée-en un ci-dessous.</div>'
       : curList.map(function(name) {
           var initial = name.trim().charAt(0).toUpperCase();
-          return '<div class="psel-item" data-portname="'+_esc(name)+'" onclick="window._pselOpen(\''+_esc(name).replace(/'/g,"\\'")+'\')">'
+          var safeName = _esc(name).replace(/'/g,"\\'");
+          return '<div class="psel-item" onclick="window._pselOpen(\''+safeName+'\')">'
                + '<div class="psel-item-icon">'+_esc(initial)+'</div>'
                + '<div class="psel-item-name">'+_esc(name)+'</div>'
-               + '<button class="psel-item-del" title="Supprimer" onclick="event.stopPropagation();window._pselDel(\''+_esc(name).replace(/'/g,"\\'")+'\')">&times;</button>'
+               + '<button class="psel-item-exp" title="Exporter" onclick="event.stopPropagation();window._pselExport(\''+safeName+'\')">⬇</button>'
+               + '<button class="psel-item-del" title="Supprimer" onclick="event.stopPropagation();window._pselDel(\''+safeName+'\')">&times;</button>'
                + '</div>';
         }).join('');
 
@@ -8301,6 +8308,10 @@ function showPortfolioSelect() {
       + '<div class="psel-new">'
       + '<input id="psel-input" type="text" placeholder="Nom du nouveau portefeuille" maxlength="40" autocomplete="off">'
       + '<button class="psel-new-btn" onclick="window._pselCreate()">+ Créer</button>'
+      + '</div>'
+      + '<div class="psel-transfer-row">'
+      + '<button class="psel-transfer-btn" onclick="window._pselImport()">⬆ Importer un portefeuille</button>'
+      + '<input type="file" id="psel-import-input" accept=".json" style="display:none" onchange="window._pselImportFile(this)">'
       + '</div>'
       + '<button class="psel-signout" onclick="authSignOut()">Se déconnecter</button>'
       + '</div>';
@@ -8327,6 +8338,63 @@ function showPortfolioSelect() {
       updateAll();
       fetchEurUsdRate().then(function(){ fetchAllPrices(); });
     }, 250);
+  };
+
+  window._pselExport = function(name) {
+    var suffixes = ['tx','px','cash','prefs','px_manual','avg_manual','tv_manual','upl_manual','cash_manual','cash_usd_manual','cash_eur_manual','donut_colors'];
+    var data = { _name: name, _version: 1 };
+    suffixes.forEach(function(s) {
+      var v = localStorage.getItem(portfolioKey(name, s));
+      if (v !== null) data[s] = v;
+    });
+    var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = name.replace(/[^a-z0-9]/gi,'_') + '_portfolio.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  window._pselImport = function() {
+    var inp = document.getElementById('psel-import-input');
+    if (inp) inp.click();
+  };
+
+  window._pselImportFile = function(input) {
+    var file = input.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        var data = JSON.parse(e.target.result);
+        var name = data._name || file.name.replace(/_portfolio\.json$/,'').replace(/_/g,' ');
+        // Ask for name if already exists
+        var curList = getPortfolios();
+        var finalName = name;
+        if (curList.includes(name)) {
+          finalName = prompt('Un portefeuille "'+name+'" existe déjà. Nouveau nom :', name + ' (importé)');
+          if (!finalName || !finalName.trim()) { input.value=''; return; }
+          finalName = finalName.trim();
+        }
+        // Write all keys to localStorage
+        var suffixes = ['tx','px','cash','prefs','px_manual','avg_manual','tv_manual','upl_manual','cash_manual','cash_usd_manual','cash_eur_manual','donut_colors'];
+        suffixes.forEach(function(s) {
+          if (data[s] !== undefined) {
+            localStorage.setItem(portfolioKey(finalName, s), data[s]);
+          }
+        });
+        curList.push(finalName);
+        savePortfolios(curList);
+        if (_sbUser) sbSaveAllPortfolios();
+        input.value = '';
+        _render();
+        notify('Portefeuille "'+finalName+'" importé avec succès', 'ok');
+      } catch(err) {
+        alert('Fichier invalide. Assure-toi d\'utiliser un fichier exporté depuis Y26 Capital.');
+        input.value = '';
+      }
+    };
+    reader.readAsText(file);
   };
 
   window._pselDel = function(name) {
