@@ -2,7 +2,7 @@
   "name": "Portfolio Tracker",
   "short_name": "Portfolio",
   "description": "Suivez votre portefeuille boursier en temps réel",
-  "start_url": "/",
+  "start_url": "/investTrack/"
   "display": "standalone",
   "background_color": "#080c14",
   "theme_color": "#0d1117",
