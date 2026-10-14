@@ -4101,32 +4101,50 @@ function notify(msg,type){
 
 // ─── BOOT: show login or auto-login ───────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
-  // Init accent color picker with saved value
-  var _picker = document.getElementById('concAccentPicker');
-  if (_picker) _picker.value = CONC_ACCENT_COLOR;
-  // Restore sidebar state
-  if(localStorage.getItem('y26_sidebar_collapsed') === '1') {
-    var app = document.querySelector('.app');
-    if(app) app.classList.add('collapsed');
-    var icon = document.getElementById('toggleIcon');
-    if(icon) icon.style.transform = 'rotate(180deg)';
-  }
-  // Restore dashboard currency preference
-  var savedCcy = localStorage.getItem('y26_dash_ccy');
-  if(savedCcy === '€') { DASH_CCY = '€'; }
-  setDashCcy(DASH_CCY);
-  // Fetch EUR/USD rate
-  fetchEurUsdRate();
+  try {
+    // Init accent color picker with saved value
+    var _picker = document.getElementById('concAccentPicker');
+    if (_picker) _picker.value = CONC_ACCENT_COLOR;
+    // Restore sidebar state
+    if(localStorage.getItem('y26_sidebar_collapsed') === '1') {
+      var app = document.querySelector('.app');
+      if(app) app.classList.add('collapsed');
+      var icon = document.getElementById('toggleIcon');
+      if(icon) icon.style.transform = 'rotate(180deg)';
+    }
+    // Restore dashboard currency preference
+    var savedCcy = localStorage.getItem('y26_dash_ccy');
+    if(savedCcy === '€') { DASH_CCY = '€'; }
+    try { setDashCcy(DASH_CCY); } catch(e2) { console.warn('setDashCcy error:', e2); }
+    // Fetch EUR/USD rate
+    try { fetchEurUsdRate(); } catch(e3) {}
+  } catch(e) { console.warn('DOMContentLoaded init error:', e); }
 
   // Vérifie si une session Supabase existe, sinon affiche l'auth
-  checkExistingSession().then(function(hasSession) {
-    if (hasSession) {
-      afterAuthLogin();
-    } else {
-      _authMode = 'login';
+  // Utilise setTimeout pour s'assurer que les scripts auth sont chargés
+  setTimeout(function() {
+    try {
+      if (typeof checkExistingSession === 'function') {
+        checkExistingSession().then(function(hasSession) {
+          if (hasSession) {
+            afterAuthLogin();
+          } else {
+            _authMode = 'login';
+            showAuth();
+          }
+        }).catch(function(e) {
+          console.warn('checkExistingSession error:', e);
+          showAuth();
+        });
+      } else {
+        console.warn('checkExistingSession not defined');
+        showAuth();
+      }
+    } catch(e) {
+      console.warn('Boot error:', e);
       showAuth();
     }
-  });
+  }, 0);
 });
 
 // ─── MODALE CLÔTURER ─────────────────────────────────────────────────────────
@@ -8003,7 +8021,7 @@ function getSupabase() {
 // ── Helpers ──────────────────────────────────────────────────────────────────
 var EYE_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
 var EYE_OFF_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18M10.6 5.1A10.9 10.9 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.1M6.1 6.1C3.6 7.8 2 12 2 12s3.6 7 10 7c1.8 0 3.4-.5 4.8-1.3M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
-var LOGO_SVG = '<svg viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="var(--surface-2)"/><rect x="12" y="32" width="10" height="18" rx="3" fill="var(--spend)"/><rect x="27" y="24" width="10" height="26" rx="3" fill="var(--accent)"/><rect x="42" y="14" width="10" height="36" rx="3" fill="var(--earn)"/></svg>';
+var LOGO_SVG = '<svg viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="#1e2d45"/><rect x="12" y="32" width="10" height="18" rx="3" fill="#f43f5e"/><rect x="27" y="24" width="10" height="26" rx="3" fill="#3b82f6"/><rect x="42" y="14" width="10" height="36" rx="3" fill="#22c55e"/></svg>';
 
 function _esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function _pwField(id, label, ac) {
@@ -8059,7 +8077,7 @@ function showAuth(msg, kind) {
   }
 
   var barsHtml = [38,62,45,80,52,70,58,90,66,48,74,84].map(function(h, i){
-    return '<div style="height:'+h+'%;background:'+(i%2?'var(--earn)':'var(--accent)')+'opacity:'+(0.55+i*0.035)+'"></div>';
+    return '<div style="height:'+h+'%;background:'+(i%2?'#22c55e':'#3b82f6')+';opacity:'+(0.55+i*0.035)+'"></div>';
   }).join('');
 
   document.getElementById('auth-root').innerHTML =
@@ -8082,7 +8100,7 @@ function showAuth(msg, kind) {
     +     '</div>'
     +     '<div class="show-bars">'
     +       [38,62,45,80,52,70,58,90,66,48,74,84].map(function(h,i){
-            return '<div style="height:'+h+'%;background:'+(i%2?'var(--earn)':'var(--accent)')+';opacity:'+(0.55+i*0.035)+'"></div>';
+            return '<div style="height:'+h+'%;background:'+(i%2?'#22c55e':'#3b82f6')+';opacity:'+(0.55+i*0.035)+'"></div>';
           }).join('')
     +     '</div>'
     +   '</div>'
